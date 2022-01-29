@@ -143,8 +143,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		args: [],
 	});
 
-	const staking = await deploy('RequiemStaking', {
-		contract: 'RequiemStaking',
+	const staking = await deploy('Staking', {
+		contract: 'Staking',
 		from: localhost,
 		log: true,
 		args: [
@@ -214,7 +214,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	console.log("indexValue DAI", tV4.toString())
 
 
-	const treasuryFactory = await ethers.getContractFactory('RequiemTreasury');
+	const treasuryFactory = await ethers.getContractFactory('Treasury');
 
 	const treasury = await treasuryFactory.deploy(
 		REQ.address,	// address _REQT,
@@ -224,8 +224,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		0,// uint256 _blocksNeededForQueue
 	);
 
-	const bondingDepository = await deploy('RequiemQBondDepository', {
-		contract: 'RequiemQBondDepository',
+	const bondingDepository = await deploy('BondDepository', {
+		contract: 'BondDepository',
 		from: localhost,
 		log: true,
 		args: [
@@ -240,8 +240,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	console.log('set treasury as vault')
 	await reqtContract.setMinter(treasury.address, ethers.constants.MaxInt256)
 
-	const depositoryContract = await ethers.getContractAt('RequiemQBondDepository', bondingDepository.address);
-	const treasuryContract = await ethers.getContractAt('RequiemTreasury', treasury.address);
+	const depositoryContract = await ethers.getContractAt('BondDepository', bondingDepository.address);
+	const treasuryContract = await ethers.getContractAt('Treasury', treasury.address);
 
 
 	const lpTokens = await treasuryContract.liquidityTokens(0)
@@ -352,24 +352,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	const reqShare = reqAmountinLP.div(10000)
 	console.log("dai 10bps of lp", daiShare.toString())
 	console.log("req 10bps of lp", reqShare.toString())
-	// const valparams = await treasuryContract['valueOfParams(address,uint256)'](
-	// 	pairREQT_DAI,// address _token, 
-	// 	inp1// uint256 _amount
-	// )
 
-	// const req = await REQ.deploy();
-
-	// const MockBonding = await ethers.getContractFactory('RequiemUV2BondingCalculator');
-	// const mockBonding = await MockBonding.deploy(REQ.address);
-
-
-
-	// console.log("params", valparams)
-
-	let val = await treasuryContract['valueOf(address,uint256)'](
-		pairREQT_DAI,// address _token, 
-		inp1// uint256 _amount
-	)
+	
 	const bn2 = await ethers.provider.getBlockNumber()
 	console.log("block number", bn2)
 	const wpairContract = await ethers.getContractAt('RequiemWeightedPair', pairREQT_DAI);
@@ -406,16 +390,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	console.log("QR", totalQ.toString())
 
 
-	console.log("test of Treasury", inp1.toString(), val.toString())
+
 	console.log("test value of CS", inp1.toString(), testVal.toString())
 	// console.log("test value of CS", inp1.toString(), testVal1.toString())
 	console.log("test value of QR", inp1.toString(), testVal2.toString())
-	let val2 = await treasuryContract['valueOf(address,uint256)'](
-		dai.address,// address _token, 
-		inp1// uint256 _amount
-	)
 
-	console.log("value of dai", inp1, val2.toString())
+
 
 
 	await depositoryContract.initializeBondTerms(
@@ -429,22 +409,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	)
 
 	const payoutInp = lpBalante.div(10)
-
-
-	let valForPayout = await treasuryContract['valueOf(address,uint256)'](
-		pairREQT_DAI,// address _token, 
-		payoutInp// uint256 _amount
-	)
-
-	console.log("inp", payoutInp.toString(), "valued at", valForPayout.toString())
-
-
-	const x = await depositoryContract.payoutFor(
-		valForPayout// uint256 _value
-	)
-	console.log("payoutFor", x.toString())
-	console.log("profit ", valForPayout.sub(x).toString())
-
 
 
 	const bp = await depositoryContract.bondPrice(

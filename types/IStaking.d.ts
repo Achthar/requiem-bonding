@@ -21,15 +21,81 @@ import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
 interface IStakingInterface extends ethers.utils.Interface {
   functions: {
-    "stake(uint256,address)": FunctionFragment;
+    "claim(address,bool)": FunctionFragment;
+    "contractBalance()": FunctionFragment;
+    "forfeit()": FunctionFragment;
+    "index()": FunctionFragment;
+    "rebase()": FunctionFragment;
+    "stake(address,uint256,bool,bool)": FunctionFragment;
+    "supplyInWarmup()": FunctionFragment;
+    "toggleLock()": FunctionFragment;
+    "totalStaked()": FunctionFragment;
+    "unstake(address,uint256,bool,bool)": FunctionFragment;
+    "unwrap(address,uint256)": FunctionFragment;
+    "wrap(address,uint256)": FunctionFragment;
   };
 
   encodeFunctionData(
+    functionFragment: "claim",
+    values: [string, boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "contractBalance",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "forfeit", values?: undefined): string;
+  encodeFunctionData(functionFragment: "index", values?: undefined): string;
+  encodeFunctionData(functionFragment: "rebase", values?: undefined): string;
+  encodeFunctionData(
     functionFragment: "stake",
-    values: [BigNumberish, string]
+    values: [string, BigNumberish, boolean, boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "supplyInWarmup",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "toggleLock",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "totalStaked",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "unstake",
+    values: [string, BigNumberish, boolean, boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "unwrap",
+    values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "wrap",
+    values: [string, BigNumberish]
   ): string;
 
+  decodeFunctionResult(functionFragment: "claim", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "contractBalance",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "forfeit", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "index", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "rebase", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "stake", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "supplyInWarmup",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "toggleLock", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "totalStaked",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "unstake", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "unwrap", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "wrap", data: BytesLike): Result;
 
   events: {};
 }
@@ -78,41 +144,275 @@ export class IStaking extends BaseContract {
   interface: IStakingInterface;
 
   functions: {
-    stake(
-      _amount: BigNumberish,
+    claim(
       _recipient: string,
+      _rebasing: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    contractBalance(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    forfeit(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    index(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    rebase(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    stake(
+      _to: string,
+      _amount: BigNumberish,
+      _rebasing: boolean,
+      _claim: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    supplyInWarmup(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    toggleLock(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    totalStaked(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    unstake(
+      _to: string,
+      _amount: BigNumberish,
+      _trigger: boolean,
+      _rebasing: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    unwrap(
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    wrap(
+      _to: string,
+      _amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
-  stake(
-    _amount: BigNumberish,
+  claim(
     _recipient: string,
+    _rebasing: boolean,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  contractBalance(overrides?: CallOverrides): Promise<BigNumber>;
+
+  forfeit(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  index(overrides?: CallOverrides): Promise<BigNumber>;
+
+  rebase(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  stake(
+    _to: string,
+    _amount: BigNumberish,
+    _rebasing: boolean,
+    _claim: boolean,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  supplyInWarmup(overrides?: CallOverrides): Promise<BigNumber>;
+
+  toggleLock(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  totalStaked(overrides?: CallOverrides): Promise<BigNumber>;
+
+  unstake(
+    _to: string,
+    _amount: BigNumberish,
+    _trigger: boolean,
+    _rebasing: boolean,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  unwrap(
+    _to: string,
+    _amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  wrap(
+    _to: string,
+    _amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    stake(
-      _amount: BigNumberish,
+    claim(
       _recipient: string,
+      _rebasing: boolean,
       overrides?: CallOverrides
-    ): Promise<boolean>;
+    ): Promise<BigNumber>;
+
+    contractBalance(overrides?: CallOverrides): Promise<BigNumber>;
+
+    forfeit(overrides?: CallOverrides): Promise<BigNumber>;
+
+    index(overrides?: CallOverrides): Promise<BigNumber>;
+
+    rebase(overrides?: CallOverrides): Promise<void>;
+
+    stake(
+      _to: string,
+      _amount: BigNumberish,
+      _rebasing: boolean,
+      _claim: boolean,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    supplyInWarmup(overrides?: CallOverrides): Promise<BigNumber>;
+
+    toggleLock(overrides?: CallOverrides): Promise<void>;
+
+    totalStaked(overrides?: CallOverrides): Promise<BigNumber>;
+
+    unstake(
+      _to: string,
+      _amount: BigNumberish,
+      _trigger: boolean,
+      _rebasing: boolean,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    unwrap(
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    wrap(
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
   };
 
   filters: {};
 
   estimateGas: {
-    stake(
-      _amount: BigNumberish,
+    claim(
       _recipient: string,
+      _rebasing: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    contractBalance(overrides?: CallOverrides): Promise<BigNumber>;
+
+    forfeit(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    index(overrides?: CallOverrides): Promise<BigNumber>;
+
+    rebase(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    stake(
+      _to: string,
+      _amount: BigNumberish,
+      _rebasing: boolean,
+      _claim: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    supplyInWarmup(overrides?: CallOverrides): Promise<BigNumber>;
+
+    toggleLock(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    totalStaked(overrides?: CallOverrides): Promise<BigNumber>;
+
+    unstake(
+      _to: string,
+      _amount: BigNumberish,
+      _trigger: boolean,
+      _rebasing: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    unwrap(
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    wrap(
+      _to: string,
+      _amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    stake(
-      _amount: BigNumberish,
+    claim(
       _recipient: string,
+      _rebasing: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    contractBalance(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    forfeit(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    index(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    rebase(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    stake(
+      _to: string,
+      _amount: BigNumberish,
+      _rebasing: boolean,
+      _claim: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    supplyInWarmup(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    toggleLock(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    totalStaked(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    unstake(
+      _to: string,
+      _amount: BigNumberish,
+      _trigger: boolean,
+      _rebasing: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    unwrap(
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    wrap(
+      _to: string,
+      _amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };
