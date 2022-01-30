@@ -13,7 +13,7 @@ import "./libraries/Ownable.sol";
  *  - Controllable minters with indivitual caps
  */
 contract RequiemERC20Token is ERC20Permit, Ownable, ERC20Burnable {
-  uint256 public MAX_TOTAL_SUPPLY = 10_000_000_000 ether; // 10bn
+  uint256 public MAX_TOTAL_SUPPLY = 10_000_000 ether; // 10mn
 
   mapping(address => uint256) public minters; // minter's address => minter's max cap
   mapping(address => uint256) public minters_minted;
@@ -29,7 +29,7 @@ contract RequiemERC20Token is ERC20Permit, Ownable, ERC20Burnable {
     _;
   }
 
-  constructor() ERC20("Requiem Token", "REQ", 18) ERC20Permit("REQ") {}
+  constructor() ERC20("Asset Backed Requiem Token", "ABREQ", 18) ERC20Permit("ABREQ") {}
 
   /* ========== MUTATIVE FUNCTIONS ========== */
 

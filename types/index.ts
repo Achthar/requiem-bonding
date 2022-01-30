@@ -4,6 +4,7 @@
 export type { Authority } from "./Authority";
 export type { BondDepository } from "./BondDepository";
 export type { FundDistributor } from "./FundDistributor";
+export type { GREQ } from "./GREQ";
 export type { IERC20 } from "./IERC20";
 export type { IERC20Metadata } from "./IERC20Metadata";
 export type { IERC20Mintable } from "./IERC20Mintable";
@@ -106,6 +107,7 @@ export type { Treasury } from "./Treasury";
 export { Authority__factory } from "./factories/Authority__factory";
 export { BondDepository__factory } from "./factories/BondDepository__factory";
 export { FundDistributor__factory } from "./factories/FundDistributor__factory";
+export { GREQ__factory } from "./factories/GREQ__factory";
 export { IERC20__factory } from "./factories/IERC20__factory";
 export { IERC20Metadata__factory } from "./factories/IERC20Metadata__factory";
 export { IERC20Mintable__factory } from "./factories/IERC20Mintable__factory";
