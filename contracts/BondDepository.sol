@@ -8,7 +8,9 @@ import "./libraries/SafeERC20.sol";
 import "./interfaces/ERC20/IERC20Metadata.sol";
 import "./interfaces/IBondDepository.sol";
 
-/// @title Olympus Bond Depository V2
+// solhint-disable  max-line-length
+
+/// @title Requiem Bond Depository
 /// @author Zeus, Indigo
 /// Review by: JeffX
 
@@ -100,9 +102,9 @@ contract BondDepository is IBondDepository, NoteKeeper {
          * amount = quote tokens in
          * price = quote tokens : req (i.e. 42069 DAI : REQ)
          *
-         * 1e18 = REQ decimals (9) + price decimals (9)
+         * 1e18 = REQ decimals + price decimals
          */
-        payout_ = ((_amount * 1e18) / price) / (10**metadata[_id].quoteDecimals);
+        payout_ = ((_amount * (2 * req.decimals())) / price) / (10**metadata[_id].quoteDecimals);
 
         // markets have a max payout amount, capping size because deposits
         // do not experience slippage. max payout is recalculated upon tuning
@@ -229,9 +231,9 @@ contract BondDepository is IBondDepository, NoteKeeper {
             uint256 price = _marketPrice(_id);
 
             // standardize capacity into an base token amount
-            // req decimals (9) + price decimals (9)
+            // req decimals + price decimals
             uint256 capacity = market.capacityInQuote
-                ? ((market.capacity * 1e18) / price) / (10**meta.quoteDecimals)
+                ? ((market.capacity * (10**(2 * req.decimals()))) / price) / (10**meta.quoteDecimals)
                 : market.capacity;
 
             /**
@@ -269,7 +271,7 @@ contract BondDepository is IBondDepository, NoteKeeper {
      * @notice             creates a new market type
      * @dev                current price should be in 9 decimals.
      * @param _quoteToken  token used to deposit
-     * @param _market      [capacity (in REQ or quote), initial price / REQ (9 decimals), debt buffer (3 decimals)]
+     * @param _market      [capacity (in REQ or quote), initial price / REQ (18 decimals), debt buffer (3 decimals)]
      * @param _booleans    [capacity in quote, fixed term]
      * @param _terms       [vesting length (if fixed term) or vested timestamp, conclusion timestamp]
      * @param _intervals   [deposit interval (seconds), tune interval (seconds)]
@@ -293,9 +295,9 @@ contract BondDepository is IBondDepository, NoteKeeper {
          * that will decay over in the length of the program if price remains the same).
          * it is converted into base token terms if passed in in quote token terms.
          *
-         * 1e18 = req decimals (9) + initial price decimals (9)
+         * 1e18 = req decimals (x) + initial price decimals (9)
          */
-        uint64 targetDebt = uint64(_booleans[0] ? ((_market[0] * 1e18) / _market[1]) / 10**decimals : _market[0]);
+        uint64 targetDebt = uint64(_booleans[0] ? ((_market[0] * (10**(2 * req.decimals()))) / _market[1]) / 10**decimals : _market[0]);
 
         /*
          * max payout is the amount of capacity that should be utilized in a deposit
@@ -420,7 +422,7 @@ contract BondDepository is IBondDepository, NoteKeeper {
      */
     function payoutFor(uint256 _amount, uint256 _id) external view override returns (uint256) {
         Metadata memory meta = metadata[_id];
-        return (_amount * 1e18) / marketPrice(_id) / 10**meta.quoteDecimals;
+        return (_amount * 10**(2 * req.decimals())) / marketPrice(_id) / 10**meta.quoteDecimals;
     }
 
     /**

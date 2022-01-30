@@ -29,7 +29,7 @@ contract RequiemERC20Token is ERC20Permit, Ownable, ERC20Burnable {
     _;
   }
 
-  constructor() ERC20("Requiem Token", "REQT", 18) ERC20Permit("REQT") {}
+  constructor() ERC20("Requiem Token", "REQ", 18) ERC20Permit("REQ") {}
 
   /* ========== MUTATIVE FUNCTIONS ========== */
 

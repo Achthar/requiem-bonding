@@ -6,7 +6,7 @@ import "./libraries/Manageable.sol";
 
 contract sRequiem is ERC20Permit, Manageable {
   modifier onlyStakingContract() {
-    require(msg.sender == stakingContract);
+    require(msg.sender == stakingContract, "only staking");
     _;
   }
 
@@ -35,7 +35,7 @@ contract sRequiem is ERC20Permit, Manageable {
   uint256 public INDEX;
 
   uint256 private constant MAX_UINT256 = ~uint256(0);
-  uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 5000000 * 10**9;
+  uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 5000000 * 10**18;
 
   // TOTAL_GONS is a multiple of INITIAL_FRAGMENTS_SUPPLY so that _gonsPerFragment is an integer.
   // Use the highest value that fits in a uint256 for max granularity.
@@ -50,7 +50,7 @@ contract sRequiem is ERC20Permit, Manageable {
 
   mapping(address => mapping(address => uint256)) private _allowedValue;
 
-  constructor() ERC20("Staked Requiem", "sREQT", 9) ERC20Permit("sREQT") {
+  constructor() ERC20("Staked Requiem", "sREQ", 18) ERC20Permit("sREQ") {
     initializer = msg.sender;
     _totalSupply = INITIAL_FRAGMENTS_SUPPLY;
     _gonsPerFragment = TOTAL_GONS / _totalSupply;
@@ -98,7 +98,7 @@ contract sRequiem is ERC20Permit, Manageable {
       rebaseAmount = profit_;
     }
 
-    _totalSupply = _totalSupply + rebaseAmount;
+    _totalSupply += rebaseAmount;
 
     if (_totalSupply > MAX_SUPPLY) {
       _totalSupply = MAX_SUPPLY;

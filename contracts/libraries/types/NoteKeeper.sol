@@ -8,6 +8,8 @@ import "../../interfaces/IStaking.sol";
 import "../../interfaces/ITreasury.sol";
 import "../../interfaces/INoteKeeper.sol";
 
+// solhint-disable max-line-length
+
 abstract contract NoteKeeper is INoteKeeper, FrontEndRewarder {
     mapping(address => Note[]) public notes; // user deposit data
     mapping(address => mapping(uint256 => address)) private noteTransfers; // change note ownership
