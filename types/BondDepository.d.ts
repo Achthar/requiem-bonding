@@ -240,7 +240,7 @@ interface BondDepositoryInterface extends ethers.utils.Interface {
     "Bond(uint256,uint256,uint256)": EventFragment;
     "CloseMarket(uint256)": EventFragment;
     "CreateMarket(uint256,address,address,uint256)": EventFragment;
-    "Tuned(uint256,uint64,uint64)": EventFragment;
+    "Tuned(uint256,uint256,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "AuthorityUpdated"): EventFragment;
@@ -1006,7 +1006,7 @@ export class BondDepository extends BaseContract {
       }
     >;
 
-    "Tuned(uint256,uint64,uint64)"(
+    "Tuned(uint256,uint256,uint256)"(
       id?: BigNumberish | null,
       oldControlVariable?: null,
       newControlVariable?: null

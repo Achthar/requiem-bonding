@@ -18,7 +18,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	const { deployments, getNamedAccounts, network } = hre;
 	const { deploy, execute, get } = deployments;
 	const { localhost, user } = await getNamedAccounts();
-
+	const ONEE18 = BigNumber.from('1000000000000000000')
 	// console.log('network', network);
 	console.log('localhost', localhost);
 	console.log('2ndParty', user);
@@ -107,12 +107,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	await execute('RequiemERC20Token', { from: localhost }, 'approve', pairManager.address, ethers.constants.MaxInt256);
 
 
-	await execute('TestWETH', { from: localhost }, 'approve', pairManager.address, ethers.constants.MaxInt256);
-
-	const wethContract = await ethers.getContractAt('TestWETH', weth.address);
 	const reqtContract = await ethers.getContractAt('RequiemERC20Token', REQ.address);
 
-	await wethContract.approve(pairManager.address, ethers.constants.MaxInt256)
 	await reqtContract.approve(pairManager.address, ethers.constants.MaxInt256)
 
 	await reqtContract.approve(router.address, ethers.constants.MaxInt256)
@@ -121,8 +117,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	await reqtContract.mint(localhost, '904707959878549431082261')
 
 	const allow = await reqtContract.allowance(localhost, pairManager.address)
-	const allow1 = await wethContract.allowance(localhost, pairManager.address)
-	console.log("approved", allow.toString(), allow1.toString())
+	console.log("approved", allow.toString())
 
 
 	const bondingCalculator = await deploy('RequiemQBondingCalculator', {
@@ -146,7 +141,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		contract: 'MockGReq',
 		from: localhost,
 		log: true,
-		args: ['10'],
+		args: ['50000000000000000000'],
 	});
 
 
@@ -189,8 +184,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	await factoryContract.createPair(REQ.address, dai.address, ethers.BigNumber.from(80), ethers.BigNumber.from(25))
 	const pairREQT_DAI = await factoryContract.getPair(REQ.address, dai.address, ethers.BigNumber.from(80), ethers.BigNumber.from(25))
 	console.log("deposit dai reqt", pairREQT_DAI)
-	// await execute('TestWETH', { from: localhost, value: BigNumber.from('10000000000000') }, 'deposit')
-	// console.log("addWETH Liquidity")
 
 	// _reserve0|uint112 :  904707.959878549431082261
 	// _reserve1|uint112 :  1494497.389348623915251951
@@ -213,14 +206,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	// ---- create U2 actual weighted pair
 
 	await factoryContract.createPair(REQ.address, dai.address, ethers.BigNumber.from(50), ethers.BigNumber.from(25))
-	const pairREQT_DAI5 = await factoryContract.getPair(REQ.address, dai.address, ethers.BigNumber.from(50), ethers.BigNumber.from(25))
 	console.log("deposit dai reqt", pairREQT_DAI)
-
-
-	const pairContract50 = await ethers.getContractAt('RequiemWeightedPair', pairREQT_DAI);
-	const priceReqt50 = await pairContract50.calculateSwapGivenIn(reqtContract.address, dai.address, BigNumber.from('1000000000000000000'))
-	console.log("price of reqt in DAI", priceReqt50.toString())
-
 
 	const tV4 = await bondingCalculatorContract.getTotalValue(pairREQT_DAI)
 
@@ -285,22 +271,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		REQDEBTOR
 	}
 
-	console.log("depositor queue")
-
-	// await treasuryContract.enable(STATUS.LIQUIDITYDEPOSITOR, localhost, localhost
-	// 	// STATUS _status,
-	// 	// address _address,
-	// 	// address _calculator
-	// )
-
-	// await treasuryContract.queueTimelock(STATUS.LIQUIDITYDEPOSITOR, localhost, localhost)
-
 	console.log("init Treasury")
 
 	await treasuryContract.initialize()
 
 	console.log("queueTimelock depositor")
-
 
 	await treasuryContract.queueTimelock(
 		STATUS.LIQUIDITYDEPOSITOR, // STATUS _managing,
@@ -355,8 +330,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 	await treasuryContract.execute(4)
 
-
-
 	console.log("queueTimelock reserveToken")
 
 	await treasuryContract.queueTimelock(
@@ -387,18 +360,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 	await treasuryContract.execute(7)
 
-	// const ibonding = await ethers.getContractFactory("IBondingCalculator")
-	// const bonding = await ibonding.attach(bondingCalculator.address)
-
-	// const gg = await bonding.valuation(pairREQT_DAI, 12412)
-	// console.log("GG", gg.toString())
-
-
 	await reqtContract.mint(treasury.address, '1000000000000000000000000')
 	await gReqtContract.mint(treasury.address, '1000000000000000000000000')
 
 	await treasury.auditReserves()
-
 
 	const bc2 = await treasuryContract.bondCalculator(pairREQT_DAI)
 	console.log("is bc after toggle", bc2)
@@ -412,47 +377,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	console.log("dai 10bps of lp", daiShare.toString())
 	console.log("req 10bps of lp", reqShare.toString())
 
-
 	const bn2 = await ethers.provider.getBlockNumber()
 	console.log("block number", bn2)
-	const wpairContract = await ethers.getContractAt('RequiemWeightedPair', pairREQT_DAI);
-	const testVal = await wpairContract.calculateSwapGivenIn(dai.address, REQ.address, daiShare);
-
-	// const formulaLite = await deploy('RequiemFormulaLite', {
-	// 	contract: 'RequiemFormulaLite',
-	// 	from: localhost,
-	// 	log: true,
-	// 	args: [],
-	// });
-
-	const bondingQCalculator = await deploy('RequiemUV2BondingCalculator', {
-		contract: 'RequiemUV2BondingCalculator',
-		from: localhost,
-		log: true,
-		args: [REQ.address],
-	});
-
-	const bondingUV2CalculatorContract = await ethers.getContractAt('RequiemUV2BondingCalculator', bondingQCalculator.address);
 
 
-	const testVal1 = await wpairContract.calculateSwapGivenIn(dai.address, REQ.address, daiShare);
-	const testVal0 = await bondingUV2CalculatorContract.valuation(pairREQT_DAI, inp1)
-	console.log("act", testVal0.toString(), "real", testVal1.add(reqShare).toString())
+	const capacity = BigNumber.from('500000').mul(ONEE18);
+	const initialPrice = BigNumber.from('4').mul(ONEE18);
+	const buffer = 2e5;
 
+	const vesting = 100000;
+	const timeToConclusion = 60 * 60 * 24;
 
-	const testVal2 = await bondingUV2CalculatorContract.valuation(pairREQT_DAI, inp1)
+	const depositInterval = 60 * 60 * 30;
+	const tuneInterval = 60 * 60;
 
-	const totalQ = await bondingUV2CalculatorContract.getTotalValue(pairREQT_DAI)
-	const totalU2 = await bondingCalculatorContract.getTotalValue(pairREQT_DAI)
+	const refReward = 10;
+	const daoReward = 50;
 
-	console.log("U2", totalU2.toString())
-	console.log("QR", totalQ.toString())
-
-
-
-	console.log("test value of CS", inp1.toString(), testVal.toString())
-	// console.log("test value of CS", inp1.toString(), testVal1.toString())
-	console.log("test value of QR", inp1.toString(), testVal2.toString())
+	var bid = 0;
+	const block = await ethers.provider.getBlock("latest");
+	const conclusion = block.timestamp + timeToConclusion;
+	const mP = capacity.mul(BigNumber.from(depositInterval)).div(BigNumber.from(timeToConclusion))
+	console.log("TD1", capacity.mul(ONEE18.mul(ONEE18)).div(initialPrice).div(ONEE18).toString())
+	console.log("TD2", capacity.toString())
+	console.log("MP", mP.toString())
+	await depositoryContract.setRewards(refReward, daoReward);
 
 	/**
 	 * @notice             creates a new market type
@@ -466,21 +415,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	 */
 
 	const _quoteToken = pairREQT_DAI
-	const _market = [
-		ethers.BigNumber.from('1000000000000000000000000'),
-		ethers.BigNumber.from('5000000000000000000'),
-		ethers.BigNumber.from('10')
-	]
-	const _booleans = [true, false]
-	const _terms = ['100000', '99999999999']
-	const _intervals = [1, 10000]
+	// const _market = [
+	// 	BigNumber.from('1000000000000000000000000'),
+	// 	BigNumber.from('3000000000000000000'),
+	// 	BigNumber.from('200000')
+	// ]
+	// const _booleans = [false, true]
+	// const _terms = ['100000', '99999999999']
+	// const _intervals = [1, 10000]
 
 	await depositoryContract.create(
 		_quoteToken, // IERC20 _quoteToken,
-		_market, // uint256[3] memory _market,
-		_booleans, // bool[2] memory _booleans,
-		_terms, // uint256[2] memory _terms,
-		_intervals // uint32[2] memory _intervals
+		// _market, // uint256[3] memory _market,
+		// _booleans, // bool[2] memory _booleans,
+		// _terms, // uint256[2] memory _terms,
+		// _intervals // uint32[2] memory _intervals
+		[capacity, initialPrice, buffer],
+		[false, true],
+		[vesting, conclusion],
+		[depositInterval, tuneInterval]
 	)
 
 	const mD = await depositoryContract.metadata(0)
@@ -525,6 +478,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		0
 	)
 	console.log("bond price", bp.toString())
+	console.log("bond price manual", cV.mul(dR).div(BigNumber.from('1000000000000000000')).toString())
 
 	const payoutInp = lpBalante.div(10)
 
