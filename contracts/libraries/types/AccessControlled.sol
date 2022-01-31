@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MIT
+
 pragma solidity >=0.7.5;
 
 import "../../interfaces/IAuthority.sol";
 
 abstract contract AccessControlled {
-    /* ========== EVENTS ========== */
+  /* ========== EVENTS ========== */
 
-    event AuthorityUpdated(IAuthority indexed authority);
+  event AuthorityUpdated(IAuthority indexed authority);
 
-    string UNAUTHORIZED = "UNAUTHORIZED"; // save gas
+  string UNAUTHORIZED = "UNAUTHORIZED"; // save gas
 
-    /* ========== STATE VARIABLES ========== */
+  /* ========== STATE VARIABLES ========== */
 
-    IAuthority public authority;
+  IAuthority public authority;
 
-    /* ========== Constructor ========== */
+  /* ========== Constructor ========== */
 
-    constructor(IAuthority _authority) {
-        authority = _authority;
-        emit AuthorityUpdated(_authority);
-    }
+  constructor(IAuthority _authority) {
+    authority = _authority;
+    emit AuthorityUpdated(_authority);
+  }
 
-    /* ========== MODIFIERS ========== */
+  /* ========== MODIFIERS ========== */
 
-    modifier onlyGovernor() {
-        require(msg.sender == authority.governor(), UNAUTHORIZED);
-        _;
-    }
+  modifier onlyGovernor() {
+    require(msg.sender == authority.governor(), UNAUTHORIZED);
+    _;
+  }
 
-    modifier onlyGuardian() {
-        require(msg.sender == authority.guardian(), UNAUTHORIZED);
-        _;
-    }
+  modifier onlyGuardian() {
+    require(msg.sender == authority.guardian(), UNAUTHORIZED);
+    _;
+  }
 
-    modifier onlyPolicy() {
-        require(msg.sender == authority.policy(), UNAUTHORIZED);
-        _;
-    }
+  modifier onlyPolicy() {
+    require(msg.sender == authority.policy(), UNAUTHORIZED);
+    _;
+  }
 
-    modifier onlyVault() {
-        require(msg.sender == authority.vault(), UNAUTHORIZED);
-        _;
-    }
+  modifier onlyVault() {
+    require(msg.sender == authority.vault(), UNAUTHORIZED);
+    _;
+  }
 
-    /* ========== GOV ONLY ========== */
+  /* ========== GOV ONLY ========== */
 
-    function setAuthority(IAuthority _newAuthority) external onlyGovernor {
-        authority = _newAuthority;
-        emit AuthorityUpdated(_newAuthority);
-    }
+  function setAuthority(IAuthority _newAuthority) external onlyGovernor {
+    authority = _newAuthority;
+    emit AuthorityUpdated(_newAuthority);
+  }
 }

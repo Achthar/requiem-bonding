@@ -52,7 +52,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		args: [],
 	});
 
-	await execute('sRequiem', { from: deployer, log: true }, 'setIndex', '50000000000000000000')
+	// await execute('sRequiem', { from: deployer, log: true }, 'setIndex', '50000000000000000000')
 
 
 	const gREQ = await deploy('gREQ', {
@@ -65,7 +65,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		],
 	});
 
-	await execute('gREQ', { from: deployer, log: true }, 'mint', deployer, ONEE18.mul(BigNumber.from(10)))
+	// await execute('gREQ', { from: deployer, log: true }, 'mint', deployer, ONEE18.mul(BigNumber.from(10)))
 
 	const authority = await deploy('Authority', {
 		contract: 'Authority',
@@ -96,7 +96,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	});
 	console.log("init sreq")
 
-	await execute('sRequiem', { from: deployer, log: true }, 'initialize', staking.address)
+	// await execute('sRequiem', { from: deployer, log: true }, 'initialize', staking.address)
 
 
 	const treasury = await deploy('Treasury', {
@@ -125,6 +125,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 	console.log('set treasury as minter')
 	await execute('RequiemERC20Token', { from: deployer, log: true }, 'setMinter', treasury.address, ethers.constants.MaxInt256);
+
+	const weightedPair = await ethers.getContractFactory('RequiemWeightedPair');
+	const weightedPairContract = await weightedPair.attach(pairREQT_DAI)
+
+	console.log("approve spending of treasury")
+	await weightedPairContract.approve(treasury.address, ethers.constants.MaxInt256)
+	// await execute('RequiemWeightedPair', { from: deployer, log: true }, 'approve', treasury.address, ethers.constants.MaxInt256)
+
+	console.log("approve spending of Depository")
+	// await execute('RequiemWeightedPair', { from: deployer, log: true }, 'approve', bondingDepository.address, ethers.constants.MaxInt256)
+	await weightedPairContract.approve(bondingDepository.address, ethers.constants.MaxInt256)
+	await execute('RequiemERC20', { from: deployer, log: true }, 'approve', bondingDepository.address, ethers.constants.MaxInt256)
+
 
 	// enum according to the contract
 	enum STATUS {
@@ -214,7 +227,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	)
 	await execute('Treasury', { from: deployer, log: true }, 'execute', 7)
 
-	await execute('RequiemERC20Token', { from: deployer, log: true }, 'mint', treasury.address, '1000000000000000000000000')
+	// await execute('RequiemERC20', { from: deployer, log: true }, 'mint(treasury.address, '1000000000000000000000000')
+	await daiContract.mint(treasury.address, '1000000000000000000000000')
+	// await gReqtContract.mint(treasury.address, '1000000000000000000000000')
 
 	await execute('Treasury', { from: deployer, log: true }, 'auditReserves')
 
@@ -228,7 +243,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	const buffer = 2e5;
 
 	const vesting = 100000;
-	const timeToConclusion = 60 * 60 * 24;
+	const timeToConclusion = 60 * 60 * 24*30;
 
 	const depositInterval = 60 * 60 * 30;
 	const tuneInterval = 60 * 60;
@@ -348,4 +363,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 };
 export default func;
-func.tags = ['bonding-depo-fuji'];
+func.tags = ['bonding-tokens-staking-fuji'];

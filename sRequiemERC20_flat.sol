@@ -1,52 +1,69 @@
 
-// File: contracts/interfaces/IOwnable.sol
+// File: contracts/interfaces/IManageable.sol
 
 
 pragma solidity 0.8.11;
 
-interface IOwnable {
-  function owner() external view returns (address);
 
-  function renounceOwnership() external;
+interface IManageable {
+  function policy() external view returns (address);
+
+  function renounceManagement() external;
   
-  function transferOwnership( address newOwner_ ) external;
+  function pushManagement( address newOwner_ ) external;
+  
+  function pullManagement() external;
 }
-// File: contracts/libraries/Ownable.sol
+// File: contracts/libraries/Manageable.sol
+
 
 
 pragma solidity 0.8.11;
 
 
-contract Ownable is IOwnable {
+contract Manageable is IManageable {
+
+    address internal _owner;
+    address internal _newOwner;
+
+    event OwnershipPushed(address indexed previousOwner, address indexed newOwner);
+    event OwnershipPulled(address indexed previousOwner, address indexed newOwner);
+
+    constructor () {
+        _owner = msg.sender;
+        emit OwnershipPushed( address(0), _owner );
+    }
+
+    function policy() public view override returns (address) {
+        return _owner;
+    }
+
+    modifier onlyPolicy() {
+        require( _owner == msg.sender, "Ownable: caller is not the owner" );
+        _;
+    }
+
+    modifier onlyManager() {
+        require( _owner == msg.sender, "Ownable: caller is not the owner" );
+        _;
+    }
+
+    function renounceManagement() public virtual override onlyPolicy() {
+        emit OwnershipPushed( _owner, address(0) );
+        _owner = address(0);
+    }
+
+    function pushManagement( address newOwner_ ) public virtual override onlyPolicy() {
+        require( newOwner_ != address(0), "Ownable: new owner is the zero address");
+        emit OwnershipPushed( _owner, newOwner_ );
+        _newOwner = newOwner_;
+    }
     
-  address internal _owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  constructor () {
-    _owner = msg.sender;
-    emit OwnershipTransferred( address(0), _owner );
-  }
-
-  function owner() public view override returns (address) {
-    return _owner;
-  }
-
-  modifier onlyOwner() {
-    require( _owner == msg.sender, "Ownable: caller is not the owner" );
-    _;
-  }
-
-  function renounceOwnership() public virtual override onlyOwner() {
-    emit OwnershipTransferred( _owner, address(0) );
-    _owner = address(0);
-  }
-
-  function transferOwnership( address newOwner_ ) public virtual override onlyOwner() {
-    require( newOwner_ != address(0), "Ownable: new owner is the zero address");
-    emit OwnershipTransferred( _owner, newOwner_ );
-    _owner = newOwner_;
-  }
+    function pullManagement() public virtual override {
+        require( msg.sender == _newOwner, "Ownable: must be new owner to pull");
+        emit OwnershipPulled( _owner, _newOwner );
+        _owner = _newOwner;
+    }
 }
 // File: contracts/libraries/EIP712.sol
 
@@ -718,196 +735,248 @@ abstract contract ERC20Permit is ERC20, IERC20Permit, EIP712 {
   }
 }
 
-// File: contracts/libraries/ERC20Burnable.sol
-
-
-
-pragma solidity ^0.8.11;
-
-
-
-/**
- * @dev Extension of {ERC20} that allows token holders to destroy both their own
- * tokens and those that they have an allowance for, in a way that can be
- * recognized off-chain (via event analysis).
- */
-abstract contract ERC20Burnable is Context, ERC20 {
-  /**
-   * @dev Destroys `amount` tokens from the caller.
-   *
-   * See {ERC20-_burn}.
-   */
-  function burn(uint256 amount) public virtual {
-    _burn(_msgSender(), amount);
-  }
-
-  /**
-   * @dev Destroys `amount` tokens from `account`, deducting from the caller's
-   * allowance.
-   *
-   * See {ERC20-_burn} and {ERC20-allowance}.
-   *
-   * Requirements:
-   *
-   * - the caller must have allowance for ``accounts``'s tokens of at least
-   * `amount`.
-   */
-  function burnFrom(address account, uint256 amount) public virtual {
-    uint256 currentAllowance = allowance(account, _msgSender());
-    require(currentAllowance >= amount, "ERC20: burn amount exceeds allowance");
-    unchecked {
-      _approve(account, _msgSender(), currentAllowance - amount);
-    }
-    _burn(account, amount);
-  }
-}
-
-// File: contracts/libraries/Initializable.sol
-
-
-
-pragma solidity ^0.8.0;
-
-/**
- * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
- * behind a proxy. Since a proxied contract can't have a constructor, it's common to move constructor logic to an
- * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer
- * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.
- *
- * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as
- * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.
- *
- * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure
- * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.
- *
- * [CAUTION]
- * ====
- * Avoid leaving a contract uninitialized.
- *
- * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation
- * contract, which may impact the proxy. To initialize the implementation contract, you can either invoke the
- * initializer manually, or you can include a constructor to automatically mark it as initialized when it is deployed:
- *
- * [.hljs-theme-light.nopadding]
- * ```
- * /// @custom:oz-upgrades-unsafe-allow constructor
- * constructor() initializer {}
- * ```
- * ====
- */
-abstract contract Initializable {
-    /**
-     * @dev Indicates that the contract has been initialized.
-     */
-    bool private _initialized;
-
-    /**
-     * @dev Indicates that the contract is in the process of being initialized.
-     */
-    bool private _initializing;
-
-    /**
-     * @dev Modifier to protect an initializer function from being invoked twice.
-     */
-    modifier initializer() {
-        require(_initializing || !_initialized, "Initializable: contract is already initialized");
-
-        bool isTopLevelCall = !_initializing;
-        if (isTopLevelCall) {
-            _initializing = true;
-            _initialized = true;
-        }
-
-        _;
-
-        if (isTopLevelCall) {
-            _initializing = false;
-        }
-    }
-}
-// File: contracts/RequiemERC20.sol
+// File: contracts/sRequiemERC20.sol
 
 
 pragma solidity 0.8.11;
 
 
 
-
-
-/**
- *  Governance token for requiem.finance
- *  - Flexible minting allowed for flexibility
- *  - Total supply cap for better control
- *  - Controllable minters with indivitual caps
- */
-contract RequiemERC20Token is ERC20Permit, Ownable, ERC20Burnable {
-  uint256 public MAX_TOTAL_SUPPLY = 10_000_000 ether; // 10mn
-
-  mapping(address => uint256) public minters; // minter's address => minter's max cap
-  mapping(address => uint256) public minters_minted;
-
-  /* ========== EVENTS ========== */
-  event MinterUpdate(address indexed account, uint256 cap);
-  event MaxTotalSupplyUpdated(uint256 _newCap);
-
-  /* ========== Modifiers =============== */
-
-  modifier onlyMinter() {
-    require(minters[msg.sender] > 0, "Only minter can interact");
+contract sRequiem is ERC20Permit, Manageable {
+  modifier onlyStakingContract() {
+    require(msg.sender == stakingContract, "only staking");
     _;
   }
 
-  constructor() ERC20("Asset Backed Requiem Token", "ABREQ", 18) ERC20Permit("ABREQ") {}
+  address public stakingContract;
+  address public initializer;
 
-  /* ========== MUTATIVE FUNCTIONS ========== */
+  event LogSupply(
+    uint256 indexed epoch,
+    uint256 timestamp,
+    uint256 _totalSupply
+  );
+  event LogRebase(uint256 indexed epoch, uint256 rebase, uint256 index);
+  event LogStakingContractUpdated(address stakingContract);
 
-  function mint(address _recipient, uint256 _amount) public onlyMinter {
-    minters_minted[_msgSender()] += _amount;
-    require(
-      minters[_msgSender()] >= minters_minted[_msgSender()],
-      "Minting amount exceeds minter cap"
-    );
-    _mint(_recipient, _amount);
+  struct Rebase {
+    uint256 epoch;
+    uint256 rebase; // 18 decimals
+    uint256 totalStakedBefore;
+    uint256 totalStakedAfter;
+    uint256 amountRebased;
+    uint256 index;
+    uint256 blockNumberOccured;
+  }
+  Rebase[] public rebases;
+
+  uint256 public INDEX;
+
+  uint256 private constant MAX_UINT256 = ~uint256(0);
+  uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 5000000 * 10**18;
+
+  // TOTAL_GONS is a multiple of INITIAL_FRAGMENTS_SUPPLY so that _gonsPerFragment is an integer.
+  // Use the highest value that fits in a uint256 for max granularity.
+  uint256 private constant TOTAL_GONS =
+    MAX_UINT256 - (MAX_UINT256 % INITIAL_FRAGMENTS_SUPPLY);
+
+  // MAX_SUPPLY = maximum integer < (sqrt(4*TOTAL_GONS + 1) - 1) / 2
+  uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
+
+  uint256 private _gonsPerFragment;
+  mapping(address => uint256) private _gonBalances;
+
+  mapping(address => mapping(address => uint256)) private _allowedValue;
+
+  constructor() ERC20("Staked Requiem", "sREQ", 18) ERC20Permit("sREQ") {
+    initializer = msg.sender;
+    _totalSupply = INITIAL_FRAGMENTS_SUPPLY;
+    _gonsPerFragment = TOTAL_GONS / _totalSupply;
   }
 
-  function _beforeTokenTransfer(
-    address _from,
-    address _to,
-    uint256 _amount
-  ) internal override {
-    super._beforeTokenTransfer(_from, _to, _amount);
-    if (_from == address(0)) {
-      // When minting tokens
-      require(
-        totalSupply() + _amount <= MAX_TOTAL_SUPPLY,
-        "Max total supply exceeded"
-      );
+  function initialize(address stakingContract_) external returns (bool) {
+    require(msg.sender == initializer);
+    require(stakingContract_ != address(0));
+    stakingContract = stakingContract_;
+    _gonBalances[stakingContract] = TOTAL_GONS;
+
+    emit Transfer(address(0x0), stakingContract, _totalSupply);
+    emit LogStakingContractUpdated(stakingContract_);
+
+    initializer = address(0);
+    return true;
+  }
+
+  function setIndex(uint256 _INDEX) external onlyManager returns (bool) {
+    require(INDEX == 0);
+    INDEX = gonsForBalance(_INDEX);
+    return true;
+  }
+
+  /**
+        @notice increases sREQT supply to increase staking balances relative to profit_
+        @param profit_ uint256
+        @return uint256
+     */
+  function rebase(uint256 profit_, uint256 epoch_)
+    public
+    onlyStakingContract
+    returns (uint256)
+  {
+    uint256 rebaseAmount;
+    uint256 circulatingSupply_ = circulatingSupply();
+
+    if (profit_ == 0) {
+      emit LogSupply(epoch_, block.timestamp, _totalSupply);
+      emit LogRebase(epoch_, 0, index());
+      return _totalSupply;
+    } else if (circulatingSupply_ > 0) {
+      rebaseAmount = (profit_ * _totalSupply) / circulatingSupply_;
+    } else {
+      rebaseAmount = profit_;
     }
-    if (_to == address(0)) {
-      // When burning tokens
-      require(
-        MAX_TOTAL_SUPPLY >= _amount,
-        "Burn amount exceeds max total supply"
-      );
-      MAX_TOTAL_SUPPLY -= _amount;
+
+    _totalSupply += rebaseAmount;
+
+    if (_totalSupply > MAX_SUPPLY) {
+      _totalSupply = MAX_SUPPLY;
     }
+
+    _gonsPerFragment = TOTAL_GONS / _totalSupply;
+
+    _storeRebase(circulatingSupply_, profit_, epoch_);
+
+    return _totalSupply;
   }
 
-  /* ========== OWNER FUNCTIONS ========== */
+  /**
+        @notice emits event with data about rebase
+        @param previousCirculating_ uint
+        @param profit_ uint
+        @param epoch_ uint
+        @return bool
+     */
+  function _storeRebase(
+    uint256 previousCirculating_,
+    uint256 profit_,
+    uint256 epoch_
+  ) internal returns (bool) {
+    uint256 rebasePercent = (profit_ * 1e18) / previousCirculating_;
 
-  function setMinter(address _account, uint256 _minterCap) external onlyOwner {
-    require(_account != address(0), "invalid address");
-    require(
-      minters_minted[_account] <= _minterCap,
-      "Minter already minted a larger amount than new cap"
+    rebases.push(
+      Rebase({
+        epoch: epoch_,
+        rebase: rebasePercent, // 18 decimals
+        totalStakedBefore: previousCirculating_,
+        totalStakedAfter: circulatingSupply(),
+        amountRebased: profit_,
+        index: index(),
+        blockNumberOccured: block.number
+      })
     );
-    minters[_account] = _minterCap;
-    emit MinterUpdate(_account, _minterCap);
+
+    emit LogSupply(epoch_, block.timestamp, _totalSupply);
+    emit LogRebase(epoch_, rebasePercent, index());
+
+    return true;
   }
 
-  function resetMaxTotalSupply(uint256 _newCap) external onlyOwner {
-    require(_newCap >= totalSupply(), "_newCap is below current total supply");
-    MAX_TOTAL_SUPPLY = _newCap;
-    emit MaxTotalSupplyUpdated(_newCap);
+  function balanceOf(address who) public view override returns (uint256) {
+    return _gonBalances[who] / _gonsPerFragment;
+  }
+
+  function gonsForBalance(uint256 amount) public view returns (uint256) {
+    return amount * _gonsPerFragment;
+  }
+
+  function balanceForGons(uint256 gons) public view returns (uint256) {
+    return gons / _gonsPerFragment;
+  }
+
+  // Staking contract holds excess sREQT
+  function circulatingSupply() public view returns (uint256) {
+    return _totalSupply - balanceOf(stakingContract);
+  }
+
+  function index() public view returns (uint256) {
+    return balanceForGons(INDEX);
+  }
+
+  function transfer(address to, uint256 value) public override returns (bool) {
+    uint256 gonValue = value * _gonsPerFragment;
+    _gonBalances[msg.sender] -= gonValue;
+    _gonBalances[to] += gonValue;
+    emit Transfer(msg.sender, to, value);
+    return true;
+  }
+
+  function allowance(address owner_, address spender)
+    public
+    view
+    override
+    returns (uint256)
+  {
+    return _allowedValue[owner_][spender];
+  }
+
+  function transferFrom(
+    address from,
+    address to,
+    uint256 value
+  ) public override returns (bool) {
+    _allowedValue[from][msg.sender] -= value;
+    emit Approval(from, msg.sender, _allowedValue[from][msg.sender]);
+
+    uint256 gonValue = gonsForBalance(value);
+    _gonBalances[from] = _gonBalances[from] - gonValue;
+    _gonBalances[to] = _gonBalances[to] + gonValue;
+    emit Transfer(from, to, value);
+
+    return true;
+  }
+
+  function approve(address spender, uint256 value)
+    public
+    override
+    returns (bool)
+  {
+    _allowedValue[msg.sender][spender] = value;
+    emit Approval(msg.sender, spender, value);
+    return true;
+  }
+
+  // What gets called in a permit
+  function _approve(
+    address owner,
+    address spender,
+    uint256 value
+  ) internal virtual override {
+    _allowedValue[owner][spender] = value;
+    emit Approval(owner, spender, value);
+  }
+
+  function increaseAllowance(address spender, uint256 addedValue)
+    public
+    override
+    returns (bool)
+  {
+    _allowedValue[msg.sender][spender] += addedValue;
+    emit Approval(msg.sender, spender, _allowedValue[msg.sender][spender]);
+    return true;
+  }
+
+  function decreaseAllowance(address spender, uint256 subtractedValue)
+    public
+    override
+    returns (bool)
+  {
+    uint256 oldValue = _allowedValue[msg.sender][spender];
+    if (subtractedValue >= oldValue) {
+      _allowedValue[msg.sender][spender] = 0;
+    } else {
+      _allowedValue[msg.sender][spender] = oldValue - subtractedValue;
+    }
+    emit Approval(msg.sender, spender, _allowedValue[msg.sender][spender]);
+    return true;
   }
 }

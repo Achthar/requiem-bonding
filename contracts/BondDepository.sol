@@ -141,10 +141,10 @@ contract BondDepository is IBondDepository, NoteKeeper {
         // markets keep track of how many quote tokens have been
         // purchased, and how much REQ has been sold
         market.purchased += _amount;
-        market.sold += uint64(payout_);
+        market.sold += payout_;
 
         // incrementing total debt raises the price of the next bond
-        market.totalDebt += uint64(payout_);
+        market.totalDebt += payout_;
 
         emit Bond(_id, _amount, price);
 

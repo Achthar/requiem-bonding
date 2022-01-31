@@ -392,12 +392,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	console.log("block number", bn2)
 
 
-	const capacity = BigNumber.from('500000').mul(ONEE18);
+	const capacity = BigNumber.from('4000000').mul(ONEE18);
 	const initialPrice = BigNumber.from('4').mul(ONEE18);
 	const buffer = 2e5;
 
 	const vesting = 100000;
-	const timeToConclusion = 60 * 60 * 24;
+	const timeToConclusion = 60 * 60 * 24 * 30;
 
 	const depositInterval = 60 * 60 * 30;
 	const tuneInterval = 60 * 60;
