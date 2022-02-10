@@ -25,6 +25,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 
 	const pairREQT_DAI = '0xcde9f3be9786e91b3b309bcf5f6de69c9ea8739c'
+	const pairWETH_USDC = '0x1152803C660f86D262f9A235612ddc82f705c0bD'
 
 	console.log("get stables contracts")
 	console.log("dai")
@@ -32,6 +33,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	const daiContract = await dai.attach('0xaea51e4fee50a980928b4353e852797b54deacd8');
 
 	const bondingCalculatorAddress = '0x2A03A0B4e33B922d381B9f7DF16111cd2C77b4b3'
+	const bondingCalculatorPairAddress = '0x62753692e6F7f666150A22F90908fDF4Ce0569c5'
 
 	const REQ = await deploy('RequiemERC20Token', {
 		contract: 'RequiemERC20Token',
@@ -88,7 +90,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 			REQ.address, //address _REQT,
 			sREQ.address, // address _sREQT,
 			gREQ.address,
-			10000,// uint256 _epochLength,
+			60 * 60 * 24 * 30,// uint256 _epochLength,
 			1,// uint256 _firstEpochNumber,
 			0, // uint256 _firstEpochBlock
 			authority.address
@@ -98,6 +100,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 	await execute('sRequiem', { from: deployer, log: true }, 'initialize', staking.address)
 
+	console.log("migrte greq")
+	await execute('gREQ', { from: deployer, log: true }, 'migrate', staking.address, sREQ.address)
 
 	const treasury = await deploy('Treasury', {
 		contract: 'Treasury',
@@ -156,7 +160,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	await execute('Treasury', { from: deployer, log: true }, 'execute', 0)
 
 
-	console.log("queueTimelock token")
+	console.log("queueTimelock token LP REQ DAI")
 	await execute('Treasury', { from: deployer, log: true }, 'queueTimelock',
 		STATUS.LIQUIDITYTOKEN, // STATUS _managing,
 		pairREQT_DAI, // address _address,
@@ -214,21 +218,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	)
 	await execute('Treasury', { from: deployer, log: true }, 'execute', 7)
 
+	console.log("queueTimelock token LP WETH USDC")
+	await execute('Treasury', { from: deployer, log: true }, 'queueTimelock',
+		STATUS.LIQUIDITYTOKEN, // STATUS _managing,
+		pairWETH_USDC, // address _address,
+		bondingCalculatorPairAddress// address _calculator
+	)
+	await execute('Treasury', { from: deployer, log: true }, 'execute', 8)
+
 	await execute('RequiemERC20Token', { from: deployer, log: true }, 'mint', treasury.address, '1000000000000000000000000')
 
 	await execute('Treasury', { from: deployer, log: true }, 'auditReserves')
 
 
-	const bn2 = await ethers.provider.getBlockNumber()
-	console.log("block number", bn2)
-
-
 	const capacity = BigNumber.from('500000').mul(ONEE18);
-	const initialPrice = BigNumber.from('4').mul(ONEE18);
+	const initialPrice = BigNumber.from('3').mul(ONEE18);
 	const buffer = 2e5;
 
-	const vesting = 100000;
-	const timeToConclusion = 60 * 60 * 24;
+	const vesting = 60 * 60 * 24 * 5;
+	const timeToConclusion = 60 * 60 * 24 * 30;
 
 	const depositInterval = 60 * 60 * 30;
 	const tuneInterval = 60 * 60;
@@ -236,8 +244,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	const refReward = 10;
 	const daoReward = 50;
 
-	var bid = 0;
 	const block = await ethers.provider.getBlock("latest");
+	console.log("Current block timestamp", block.timestamp)
 	const conclusion = block.timestamp + timeToConclusion;
 
 	const mP = capacity.mul(BigNumber.from(depositInterval)).div(BigNumber.from(timeToConclusion))
@@ -268,82 +276,105 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		[depositInterval, tuneInterval]
 	)
 
-	const mD = await execute('BondDepository', { from: deployer, log: true }, 'metadata', 0)
-	const dR = await execute('BondDepository', { from: deployer, log: true }, 'debtRatio', 0)
-	const cD = await execute('BondDepository', { from: deployer, log: true }, 'currentDebt', 0)
-	const bS = await execute('Treasury', { from: deployer, log: true }, 'baseSupply')
-	const tD = await execute('Treasury', { from: deployer, log: true }, 'totalDebt')
-	const tR = await execute('Treasury', { from: deployer, log: true }, 'totalReserves')
-	const terms = await execute('BondDepository', { from: deployer, log: true }, 'terms', 0)
-	const cV = await execute('BondDepository', { from: deployer, log: true }, 'currentControlVariable', 0)
-	const excessRes = await execute('Treasury', { from: deployer, log: true }, 'excessReserves')
-	const tS = await execute('RequiemERC20', { from: deployer, log: true }, 'totalSupply')
+	// const mD = await execute('BondDepository', { from: deployer, log: true }, 'metadata', 0)
+	// const dR = await execute('BondDepository', { from: deployer, log: true }, 'debtRatio', 0)
+	// const cD = await execute('BondDepository', { from: deployer, log: true }, 'currentDebt', 0)
+	// const bS = await execute('Treasury', { from: deployer, log: true }, 'baseSupply')
+	// const tD = await execute('Treasury', { from: deployer, log: true }, 'totalDebt')
+	// const tR = await execute('Treasury', { from: deployer, log: true }, 'totalReserves')
+	// const terms = await execute('BondDepository', { from: deployer, log: true }, 'terms', 0)
+	// const cV = await execute('BondDepository', { from: deployer, log: true }, 'currentControlVariable', 0)
+	// const excessRes = await execute('Treasury', { from: deployer, log: true }, 'excessReserves')
+	// const tS = await execute('RequiemERC20', { from: deployer, log: true }, 'totalSupply')
 
-	console.log("metaData", mD)
-	console.log("debtRatio", dR.toString())
-	console.log("currentDebt", cD.toString())
-	console.log("baseSupply", bS.toString())
-	console.log("totalDebt", tD.toString())
-	console.log("totalReserves", tR.toString())
-	console.log("totalSupply", tS.toString())
-	console.log("terms", terms)
-	// console.log("CVariable", terms.controlVariable.toString())
-	console.log("CVariable Current", cV.toString())
-	console.log("excess Reserves", excessRes.toString())
+	// console.log("metaData", mD)
+	// console.log("debtRatio", dR.toString())
+	// console.log("currentDebt", cD.toString())
+	// console.log("baseSupply", bS.toString())
+	// console.log("totalDebt", tD.toString())
+	// console.log("totalReserves", tR.toString())
+	// console.log("totalSupply", tS.toString())
+	// console.log("terms", terms)
+	// // console.log("CVariable", terms.controlVariable.toString())
+	// console.log("CVariable Current", cV.toString())
+	// console.log("excess Reserves", excessRes.toString())
 
-	const bp = await execute('BondDepository', { from: deployer, log: true }, 'marketPrice',
-		0
-	)
-	console.log("bond price", bp.toString())
+	// const bp = await execute('BondDepository', { from: deployer, log: true }, 'marketPrice',
+	// 	0
+	// )
+	// console.log("bond price", bp.toString())
 	// console.log("bond price manual", cV.mul(dR).div(BigNumber.from('1000000000000000000')).toString())
 
-	const payoutInp = BigNumber.from(ONEE18.mul(BigNumber.from('10')))
+	
+	const capacity1 = BigNumber.from('5000').mul(ONEE18);
+	const initialPrice1 = BigNumber.from('4').mul(ONEE18);
+	const buffer1 = 2e5;
+
+	const vesting1 = 60 * 60 * 24 * 30;
+	const timeToConclusion1 = 60 * 60 * 24 * 30 * 3;
+
+	const depositInterval1 = 60 * 60 * 24;
+	const tuneInterval1 = 60 * 60;
+
+	const refReward1 = 10;
+	const daoReward1 = 50;
+
+	const block1 = await ethers.provider.getBlock("latest");
+	console.log("Current block timestamp", block1.timestamp)
+	const conclusion1 = block1.timestamp + timeToConclusion1;
+
+	const mP1 = capacity1.mul(BigNumber.from(depositInterval1)).div(BigNumber.from(timeToConclusion1))
+	console.log("TD1", capacity1.mul(ONEE18.mul(ONEE18)).div(initialPrice1).div(ONEE18).toString())
+	console.log("TD2", capacity1.toString())
+	console.log("MP", mP1.toString())
 
 	/**
-	 * @notice             deposit quote tokens in exchange for a bond from a specified market
-	 * @param _id          the ID of the market
-	 * @param _amount      the amount of quote token to spend
-	 * @param _maxPrice    the maximum price at which to buy
-	 * @param _user        the recipient of the payout
-	 * @param _referral    the front end operator address
-	 * @return payout_     the amount of gREQ due
-	 * @return expiry_     the timestamp at which payout is redeemable
-	 * @return index_      the user index of the Note (used to redeem or query information)
+	 * @notice             creates a new market type
+	 * @dev                current price should be in 9 decimals.
+	 * @param _quoteToken  token used to deposit
+	 * @param _market      [capacity (in REQ or quote), initial price / REQ (x decimals), debt buffer (3 decimals)]
+	 * @param _booleans    [capacity in quote, fixed term]
+	 * @param _terms       [vesting length (if fixed term) or vested timestamp, conclusion timestamp]
+	 * @param _intervals   [deposit interval (seconds), tune interval (seconds)]
+	 * @return id_         ID of new bond market
 	 */
-	await execute('BondDepository', { from: deployer, log: true }, 'deposit',
-		0, // uint256 _id,
-		payoutInp, // uint256 _amount,
-		BigNumber.from('9999999999999999999999999999999'), // uint256 _maxPrice,
-		deployer, // address _user,
-		deployer // address _referral
+
+	const _quoteToken1 = pairWETH_USDC
+
+	await execute('BondDepository', { from: deployer, log: true }, 'create',
+		_quoteToken1, // IERC20 _quoteToken,
+		[capacity1, initialPrice1, buffer1],
+		[false, true],
+		[vesting1, conclusion1],
+		[depositInterval1, tuneInterval1]
 	)
 
-	const mD1 = await execute('BondDepository', { from: deployer, log: true }, 'metadata', 0)
-	const dR1 = await execute('BondDepository', { from: deployer, log: true }, 'debtRatio', 0)
-	const cD1 = await execute('BondDepository', { from: deployer, log: true }, 'currentDebt', 0)
-	const bS1 = await execute('Treasury', { from: deployer, log: true }, 'baseSupply')
-	const tD1 = await execute('Treasury', { from: deployer, log: true }, 'totalDebt')
-	const tR1 = await execute('Treasury', { from: deployer, log: true }, 'totalReserves')
-	const terms1 = await execute('BondDepository', { from: deployer, log: true }, 'terms', 0)
-	const cV1 = await execute('BondDepository', { from: deployer, log: true }, 'currentControlVariable', 0)
-	const excessRes1 = await execute('Treasury', { from: deployer, log: true }, 'excessReserves')
-	const tS1 = await execute('RequiemERC20', { from: deployer, log: true }, 'totalSupply')
+	// const mD1 = await execute('BondDepository', { from: deployer, log: true }, 'metadata', 1)
+	// const dR1 = await execute('BondDepository', { from: deployer, log: true }, 'debtRatio', 1)
+	// const cD1 = await execute('BondDepository', { from: deployer, log: true }, 'currentDebt', 1)
+	// const bS1 = await execute('Treasury', { from: deployer, log: true }, 'baseSupply')
+	// const tD1 = await execute('Treasury', { from: deployer, log: true }, 'totalDebt')
+	// const tR1 = await execute('Treasury', { from: deployer, log: true }, 'totalReserves')
+	// const terms1 = await execute('BondDepository', { from: deployer, log: true }, 'terms', 1)
+	// const cV1 = await execute('BondDepository', { from: deployer, log: true }, 'currentControlVariable', 1)
+	// const excessRes1 = await execute('Treasury', { from: deployer, log: true }, 'excessReserves')
+	// const tS1 = await execute('RequiemERC20', { from: deployer, log: true }, 'totalSupply')
 
-	console.log("metaData", mD1)
-	console.log("debtRatio", dR1.toString())
-	console.log("currentDebt", cD1.toString())
-	console.log("baseSupply", bS1.toString())
-	console.log("totalDebt", tD1.toString())
-	console.log("totalReserves", tR1.toString())
-	console.log("totalSupply", tS1.toString())
-	console.log("terms", terms1)
-	// console.log("CVariable", terms1.controlVariable.toString())
-	console.log("CVariable Current", cV1.toString())
-	console.log("excess Reserves", excessRes1.toString())
+	// console.log("metaData", mD1)
+	// console.log("debtRatio", dR1.toString())
+	// console.log("currentDebt", cD1.toString())
+	// console.log("baseSupply", bS1.toString())
+	// console.log("totalDebt", tD1.toString())
+	// console.log("totalReserves", tR1.toString())
+	// console.log("totalSupply", tS1.toString())
+	// console.log("terms", terms1)
+	// // console.log("CVariable", terms1.controlVariable.toString())
+	// console.log("CVariable Current", cV1.toString())
+	// console.log("excess Reserves", excessRes1.toString())
 
 
-	const bp1 = await execute('BondDepository', { from: deployer, log: true }, 'marketPrice', 0)
-	console.log("bond price", bp1.toString())
+	// const bp1 = await execute('BondDepository', { from: deployer, log: true }, 'marketPrice', 1)
+	// console.log("bond price", bp1.toString())
 	// console.log("bond price manual", cV1.mul(dR1).div(BigNumber.from('1000000000000000000')).toString())
 
 };

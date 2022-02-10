@@ -85,7 +85,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 	await execute('DAI', { from: localhost, log: true }, 'mint', localhost, parseUnits('100000000000', 18));
 	await execute('DAI', { from: localhost }, 'approve', router.address, ethers.constants.MaxInt256);
+	await execute('TestWETH', { from: localhost }, 'approve', pairManager.address, ethers.constants.MaxInt256);
 
+	const usdc = await deploy('USDC', {
+		contract: 'MockERC20',
+		from: localhost,
+		log: true,
+		args: ['USDC Stablecoin', 'USDC', 6],
+	});
+
+
+	await execute('USDC', { from: localhost, log: true }, 'mint', localhost, parseUnits('100000000000', 6));
+	await execute('USDC', { from: localhost }, 'approve', router.address, ethers.constants.MaxInt256);
+	await execute('USDC', { from: localhost }, 'approve', pairManager.address, ethers.constants.MaxInt256);
 
 	const deadline = Math.floor(Date.now() / 1000 + 7200);
 
@@ -182,6 +194,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		],
 	});
 
+	const stakingContract = await ethers.getContractAt('Staking', staking.address);
 	console.log("init sreq")
 	await sReqtContract.initialize(staking.address)
 
@@ -198,7 +211,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	const reqAmountinLP = BigNumber.from('904707959878549431082261')
 	const daiAmountinLP = BigNumber.from('1494497389348623915251951')
 
-	const liqDaiREQT = await execute('RequiemQPairManager', { from: localhost }, 'addLiquidity', pairREQT_DAI, REQ.address, dai.address,
+	await execute('RequiemQPairManager', { from: localhost }, 'addLiquidity', pairREQT_DAI, REQ.address, dai.address,
 		reqAmountinLP,
 		daiAmountinLP,
 		reqAmountinLP,
@@ -213,12 +226,26 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 	// ---- create U2 actual weighted pair
 
-	await factoryContract.createPair(REQ.address, dai.address, ethers.BigNumber.from(50), ethers.BigNumber.from(25))
-	console.log("deposit dai reqt", pairREQT_DAI)
+	await factoryContract.createPair(weth.address, usdc.address, ethers.BigNumber.from(50), ethers.BigNumber.from(15))
+	const pairWETH_USDC = await factoryContract.getPair(weth.address, usdc.address, ethers.BigNumber.from(50), ethers.BigNumber.from(15))
+	console.log("deposit weth usdc", pairWETH_USDC)
 
-	const tV4 = await bondingCalculatorContract.getTotalValue(pairREQT_DAI)
+	// _reserve0|uint112 :  904707.959878549431082261
+	// _reserve1|uint112 :  1494497.251951
+	await execute('TestWETH', { from: localhost, value: BigNumber.from('904707959878549431082') }, 'deposit')
+	const wethAmountinLP = BigNumber.from('904707959878549431082')
+	const usdcAmountinLP = BigNumber.from('1494495251')
 
-	console.log("indexValue DAI", tV4.toString())
+	await execute('RequiemQPairManager', { from: localhost }, 'addLiquidity', pairWETH_USDC, weth.address, usdc.address,
+		wethAmountinLP,
+		usdcAmountinLP,
+		wethAmountinLP,
+		usdcAmountinLP,
+		localhost,
+		'99999999999999999999');
+
+
+	const pairContractWeth = await ethers.getContractAt('RequiemWeightedPair', pairWETH_USDC);
 
 
 	const treasuryFactory = await ethers.getContractFactory('Treasury');
@@ -251,10 +278,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 	console.log("get pair data")
 
-	const lpBalante = await pairContract.balanceOf(localhost)
+	const reqPairBalance = await pairContract.balanceOf(localhost)
+	const wethPairBalance = await pairContractWeth.balanceOf(localhost)
 	const ts = await pairContract.totalSupply()
 
-	console.log("balante", lpBalante.toString(), "total supply ", ts.toString())
+	console.log("balante", reqPairBalance.toString(), "total supply ", ts.toString())
 
 	console.log("approve spending of treasury")
 
@@ -263,6 +291,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	await pairContract.connect(localhost)
 	await pairContract.approve(bondingDepository.address, ethers.constants.MaxInt256)
 	await reqtContract.approve(bondingDepository.address, ethers.constants.MaxInt256)
+
+	await pairContractWeth.connect(localhost)
+	await pairContractWeth.approve(bondingDepository.address, ethers.constants.MaxInt256)
 
 	// enum according to the contract
 	enum STATUS {
@@ -393,11 +424,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 
 	const capacity = BigNumber.from('4000000').mul(ONEE18);
-	const initialPrice = BigNumber.from('4').mul(ONEE18);
+	const initialPrice = BigNumber.from('35').mul(ONEE18).div(BigNumber.from('10'));
 	const buffer = 2e5;
 
-	const vesting = 100000;
-	const timeToConclusion = 60 * 60 * 24 * 30;
+	const vesting = 60 * 60 * 24 * 5;
+	const timeToConclusion = 60 * 60 * 24 * 30 * 3;
 
 	const depositInterval = 60 * 60 * 30;
 	const tuneInterval = 60 * 60;
@@ -491,7 +522,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	console.log("bond price", bp.toString())
 	console.log("bond price manual", cV.mul(dR).div(BigNumber.from('1000000000000000000')).toString())
 
-	const payoutInp = lpBalante.div(10)
+	const payoutInp = reqPairBalance.div(10)
 
 	/**
 	 * @notice             deposit quote tokens in exchange for a bond from a specified market
@@ -539,6 +570,92 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	const bp1 = await depositoryContract.marketPrice(0)
 	console.log("bond price", bp1.toString())
 	console.log("bond price manual", cV1.mul(dR1).div(BigNumber.from('1000000000000000000')).toString())
+
+	console.log("claim")
+	await stakingContract.claim(localhost, true)
+	const supply = await sReqtContract.circulatingSupply()
+	console.log("curculating supply", supply.toString())
+	await gReqtContract.approve(staking.address, ethers.constants.MaxInt256)
+	await stakingContract.unwrap(localhost, BigNumber.from('21497842172345434353'))
+	const capacity1 = BigNumber.from('500000').mul(ONEE18);
+
+	const supply1 = await sReqtContract.circulatingSupply()
+	console.log("curculating supply1", supply1.toString())
+
+	const initialPrice1 = BigNumber.from('410').mul(BigNumber.from('10000000000000000'));
+	const buffer1 = 2e5;
+
+	const vesting1 = 60 * 60 * 24 * 30;
+	const timeToConclusion1 = 60 * 60 * 24 * 30 * 3;
+
+	const depositInterval1 = 60 * 60 * 24;
+	const tuneInterval1 = 60 * 60;
+
+	const refReward1 = 10;
+	const daoReward1 = 50;
+
+	const block1 = await ethers.provider.getBlock("latest");
+	console.log("Current block timestamp", block1.timestamp)
+	const conclusion1 = block1.timestamp + timeToConclusion1;
+
+	const mP1 = capacity1.mul(BigNumber.from(depositInterval1)).div(BigNumber.from(timeToConclusion1))
+	console.log("TD1", capacity1.mul(ONEE18.mul(ONEE18)).div(initialPrice1).div(ONEE18).toString())
+	console.log("TD2", capacity1.toString())
+	console.log("MP", mP1.toString())
+
+	/**
+	 * @notice             creates a new market type
+	 * @dev                current price should be in 9 decimals.
+	 * @param _quoteToken  token used to deposit
+	 * @param _market      [capacity (in REQ or quote), initial price / REQ (x decimals), debt buffer (3 decimals)]
+	 * @param _booleans    [capacity in quote, fixed term]
+	 * @param _terms       [vesting length (if fixed term) or vested timestamp, conclusion timestamp]
+	 * @param _intervals   [deposit interval (seconds), tune interval (seconds)]
+	 * @return id_         ID of new bond market
+	 */
+
+	const _quoteToken1 = pairWETH_USDC
+
+
+	console.log("ARGS")
+	console.log(_quoteToken1)// IERC20 _quoteToken,
+	console.log([capacity1.toString(), initialPrice1.toString(), buffer1])
+	console.log([false, true])
+	console.log([vesting1, conclusion1])
+	console.log([depositInterval1, tuneInterval1]
+	)
+	await execute('BondDepository', { from: localhost, log: true }, 'create',
+		_quoteToken1, // IERC20 _quoteToken,
+		[capacity1, initialPrice1, buffer1],
+		[false, true],
+		[vesting1, conclusion1],
+		[depositInterval1, tuneInterval1]
+	)
+
+	console.log("deposit weth usdc pair LP")
+	const payoutWethInp = wethPairBalance.div(10)
+	console.log("amount", payoutWethInp.toString())
+	const capacity2 = await depositoryContract.markets(1)
+	console.log("capacity for 2nd LP", capacity2.capacity.toString())
+	const marketPrice2 = await depositoryContract.marketPrice(1)
+	// payout_ = ((_amount * 10**(2 * req.decimals())) / price) / (10**metadata[_id].quoteDecimals);
+	const payout = payoutWethInp.mul(ONEE18).mul(ONEE18).div(marketPrice2).div(ONEE18)
+	console.log("payout", payout.toString())
+
+	await depositoryContract.deposit(
+		1, // uint256 _id,
+		payoutWethInp, // uint256 _amount,
+		BigNumber.from('9999999999999999999999999999999'), // uint256 _maxPrice,
+		localhost, // address _user,
+		localhost // address _referral
+	)
+
+	const supply2 = await sReqtContract.circulatingSupply()
+	console.log("curculating supply2", supply2.toString())
+
+	const bp12 = await depositoryContract.marketPrice(1)
+	console.log("bond price", bp12.toString())
+
 
 };
 export default func;

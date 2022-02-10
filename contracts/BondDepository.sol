@@ -47,7 +47,7 @@ contract BondDepository is IBondDepository, NoteKeeper {
         ITreasury _treasury
     ) NoteKeeper(_authority, _req, _greq, _staking, _treasury) {
         // save gas for users by bulk approving stake() transactions
-        _req.approve(address(_staking), 1e45);
+        _req.approve(address(_staking), 1e51);
     }
 
     /* ======== DEPOSIT ======== */
@@ -295,7 +295,7 @@ contract BondDepository is IBondDepository, NoteKeeper {
          * that will decay over in the length of the program if price remains the same).
          * it is converted into base token terms if passed in in quote token terms.
          *
-         * 1e18 = req decimals (x) + initial price decimals (9)
+         * 1e18 = req decimals (x) + initial price decimals (18)
          */
         uint256 targetDebt = uint256(_booleans[0] ? ((_market[0] * (10**(2 * req.decimals()))) / _market[1]) / 10**decimals : _market[0]);
 

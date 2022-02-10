@@ -376,58 +376,60 @@ interface IAuthority {
 // File: contracts/libraries/types/AccessControlled.sol
 
 
+
 pragma solidity >=0.7.5;
 
 
 abstract contract AccessControlled {
-    /* ========== EVENTS ========== */
+  /* ========== EVENTS ========== */
 
-    event AuthorityUpdated(IAuthority indexed authority);
+  event AuthorityUpdated(IAuthority indexed authority);
 
-    string UNAUTHORIZED = "UNAUTHORIZED"; // save gas
+  string UNAUTHORIZED = "UNAUTHORIZED"; // save gas
 
-    /* ========== STATE VARIABLES ========== */
+  /* ========== STATE VARIABLES ========== */
 
-    IAuthority public authority;
+  IAuthority public authority;
 
-    /* ========== Constructor ========== */
+  /* ========== Constructor ========== */
 
-    constructor(IAuthority _authority) {
-        authority = _authority;
-        emit AuthorityUpdated(_authority);
-    }
+  constructor(IAuthority _authority) {
+    authority = _authority;
+    emit AuthorityUpdated(_authority);
+  }
 
-    /* ========== MODIFIERS ========== */
+  /* ========== MODIFIERS ========== */
 
-    modifier onlyGovernor() {
-        require(msg.sender == authority.governor(), UNAUTHORIZED);
-        _;
-    }
+  modifier onlyGovernor() {
+    require(msg.sender == authority.governor(), UNAUTHORIZED);
+    _;
+  }
 
-    modifier onlyGuardian() {
-        require(msg.sender == authority.guardian(), UNAUTHORIZED);
-        _;
-    }
+  modifier onlyGuardian() {
+    require(msg.sender == authority.guardian(), UNAUTHORIZED);
+    _;
+  }
 
-    modifier onlyPolicy() {
-        require(msg.sender == authority.policy(), UNAUTHORIZED);
-        _;
-    }
+  modifier onlyPolicy() {
+    require(msg.sender == authority.policy(), UNAUTHORIZED);
+    _;
+  }
 
-    modifier onlyVault() {
-        require(msg.sender == authority.vault(), UNAUTHORIZED);
-        _;
-    }
+  modifier onlyVault() {
+    require(msg.sender == authority.vault(), UNAUTHORIZED);
+    _;
+  }
 
-    /* ========== GOV ONLY ========== */
+  /* ========== GOV ONLY ========== */
 
-    function setAuthority(IAuthority _newAuthority) external onlyGovernor {
-        authority = _newAuthority;
-        emit AuthorityUpdated(_newAuthority);
-    }
+  function setAuthority(IAuthority _newAuthority) external onlyGovernor {
+    authority = _newAuthority;
+    emit AuthorityUpdated(_newAuthority);
+  }
 }
 
 // File: contracts/libraries/types/FrontEndRewarder.sol
+
 
 
 pragma solidity ^0.8.10;
@@ -496,6 +498,7 @@ abstract contract FrontEndRewarder is AccessControlled {
 }
 
 // File: contracts/libraries/types/NoteKeeper.sol
+
 
 
 pragma solidity ^0.8.10;
@@ -836,10 +839,10 @@ contract BondDepository is IBondDepository, NoteKeeper {
         // markets keep track of how many quote tokens have been
         // purchased, and how much REQ has been sold
         market.purchased += _amount;
-        market.sold += uint64(payout_);
+        market.sold += payout_;
 
         // incrementing total debt raises the price of the next bond
-        market.totalDebt += uint64(payout_);
+        market.totalDebt += payout_;
 
         emit Bond(_id, _amount, price);
 

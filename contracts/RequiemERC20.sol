@@ -29,7 +29,7 @@ contract RequiemERC20Token is ERC20Permit, Ownable, ERC20Burnable {
     _;
   }
 
-  constructor() ERC20("Asset Backed Requiem Token", "ABREQ", 18) ERC20Permit("ABREQ") {}
+  constructor() ERC20("Asset Backed Requiem Token", "abREQ", 18) ERC20Permit("abREQ") {}
 
   /* ========== MUTATIVE FUNCTIONS ========== */
 
