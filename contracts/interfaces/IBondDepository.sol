@@ -4,7 +4,6 @@ pragma solidity >=0.7.5;
 import "./ERC20/IERC20.sol";
 
 interface IBondDepository {
-
   // Info about each type of market
   struct Market {
     uint256 capacity; // capacity remaining
@@ -43,7 +42,6 @@ interface IBondDepository {
     bool active;
   }
 
-
   /**
    * @notice deposit market
    * @param _bid uint256
@@ -61,27 +59,43 @@ interface IBondDepository {
     uint256 _maxPrice,
     address _user,
     address _referral
-  ) external returns (
-    uint256 payout_, 
-    uint256 expiry_,
-    uint256 index_
-  );
+  )
+    external
+    returns (
+      uint256 payout_,
+      uint256 expiry_,
+      uint256 index_
+    );
 
-  function create (
+  function create(
     IERC20 _quoteToken, // token used to deposit
     uint256[3] memory _market, // [capacity, initial price]
     bool[2] memory _booleans, // [capacity in quote, fixed term]
     uint256[2] memory _terms, // [vesting, conclusion]
     uint32[2] memory _intervals // [deposit interval, tune interval]
   ) external returns (uint256 id_);
+
   function close(uint256 _id) external;
 
   function isLive(uint256 _bid) external view returns (bool);
+
   function liveMarkets() external view returns (uint256[] memory);
-  function liveMarketsFor(address _quoteToken) external view returns (uint256[] memory);
-  function payoutFor(uint256 _amount, uint256 _bid) external view returns (uint256);
+
+  function liveMarketsFor(address _quoteToken)
+    external
+    view
+    returns (uint256[] memory);
+
+  function payoutFor(uint256 _amount, uint256 _bid)
+    external
+    view
+    returns (uint256);
+
   function marketPrice(uint256 _bid) external view returns (uint256);
+
   function currentDebt(uint256 _bid) external view returns (uint256);
+
   function debtRatio(uint256 _bid) external view returns (uint256);
-  function debtDecay(uint256 _bid) external view returns (uint64);
+
+  function debtDecay(uint256 _bid) external view returns (uint256);
 }

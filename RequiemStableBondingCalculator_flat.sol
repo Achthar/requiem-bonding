@@ -3,7 +3,7 @@
 
 
 
-pragma solidity >=0.8.11;
+pragma solidity >=0.8.12;
 
 // solhint-disable no-inline-assembly, reason-string, max-line-length
 
@@ -136,7 +136,7 @@ library FullMath {
 // File: contracts/libraries/math/FixedPoint.sol
 
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 
 library FixedPoint {
@@ -190,7 +190,7 @@ library FixedPoint {
 
 
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.12;
 
 interface IRequiemSwap {
   function calculateSwapGivenIn(
@@ -209,7 +209,7 @@ interface IRequiemSwap {
 // File: contracts/interfaces/ERC20/IERC20.sol
 
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 interface IERC20 {
     function decimals() external view returns (uint8);
@@ -234,7 +234,7 @@ interface IERC20 {
 
 
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 
 // solhint-disable var-name-mixedcase
@@ -339,7 +339,7 @@ interface IRequiemStableSwap {
 
 
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.12;
 
 
 interface IStableLPToken {
@@ -351,7 +351,7 @@ interface IStableLPToken {
 // File: contracts/interfaces/IBondingCalculator.sol
 
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 interface IBondingCalculator {
   function valuation(address pair_, uint256 amount_)
@@ -364,7 +364,7 @@ interface IBondingCalculator {
 
 
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 
 

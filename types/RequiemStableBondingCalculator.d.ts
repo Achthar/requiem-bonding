@@ -22,14 +22,12 @@ interface RequiemStableBondingCalculatorInterface
   extends ethers.utils.Interface {
   functions: {
     "QUOTE()": FunctionFragment;
-    "REQ()": FunctionFragment;
     "getTotalValue(address)": FunctionFragment;
     "markdown(address)": FunctionFragment;
     "valuation(address,uint256)": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "QUOTE", values?: undefined): string;
-  encodeFunctionData(functionFragment: "REQ", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getTotalValue",
     values: [string]
@@ -41,7 +39,6 @@ interface RequiemStableBondingCalculatorInterface
   ): string;
 
   decodeFunctionResult(functionFragment: "QUOTE", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "REQ", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getTotalValue",
     data: BytesLike
@@ -98,20 +95,18 @@ export class RequiemStableBondingCalculator extends BaseContract {
   functions: {
     QUOTE(overrides?: CallOverrides): Promise<[string]>;
 
-    REQ(overrides?: CallOverrides): Promise<[string]>;
-
     getTotalValue(
-      _stablePool: string,
+      _lpAddress: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { _value: BigNumber }>;
 
     markdown(
-      _stablePool: string,
+      _lpAddress: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
     valuation(
-      _stablePool: string,
+      _lpAddress: string,
       amount_: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { _value: BigNumber }>;
@@ -119,17 +114,15 @@ export class RequiemStableBondingCalculator extends BaseContract {
 
   QUOTE(overrides?: CallOverrides): Promise<string>;
 
-  REQ(overrides?: CallOverrides): Promise<string>;
-
   getTotalValue(
-    _stablePool: string,
+    _lpAddress: string,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  markdown(_stablePool: string, overrides?: CallOverrides): Promise<BigNumber>;
+  markdown(_lpAddress: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   valuation(
-    _stablePool: string,
+    _lpAddress: string,
     amount_: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
@@ -137,20 +130,15 @@ export class RequiemStableBondingCalculator extends BaseContract {
   callStatic: {
     QUOTE(overrides?: CallOverrides): Promise<string>;
 
-    REQ(overrides?: CallOverrides): Promise<string>;
-
     getTotalValue(
-      _stablePool: string,
+      _lpAddress: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    markdown(
-      _stablePool: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    markdown(_lpAddress: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     valuation(
-      _stablePool: string,
+      _lpAddress: string,
       amount_: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -161,20 +149,15 @@ export class RequiemStableBondingCalculator extends BaseContract {
   estimateGas: {
     QUOTE(overrides?: CallOverrides): Promise<BigNumber>;
 
-    REQ(overrides?: CallOverrides): Promise<BigNumber>;
-
     getTotalValue(
-      _stablePool: string,
+      _lpAddress: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    markdown(
-      _stablePool: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    markdown(_lpAddress: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     valuation(
-      _stablePool: string,
+      _lpAddress: string,
       amount_: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -183,20 +166,18 @@ export class RequiemStableBondingCalculator extends BaseContract {
   populateTransaction: {
     QUOTE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    REQ(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     getTotalValue(
-      _stablePool: string,
+      _lpAddress: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     markdown(
-      _stablePool: string,
+      _lpAddress: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     valuation(
-      _stablePool: string,
+      _lpAddress: string,
       amount_: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

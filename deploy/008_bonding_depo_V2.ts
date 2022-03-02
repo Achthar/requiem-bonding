@@ -618,11 +618,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 
 	console.log("ARGS")
-	console.log(_quoteToken1)// IERC20 _quoteToken,
-	console.log([capacity1.toString(), initialPrice1.toString(), buffer1])
-	console.log([false, true])
-	console.log([vesting1, conclusion1])
-	console.log([depositInterval1, tuneInterval1]
+	console.log("quoteTioken", _quoteToken1)// IERC20 _quoteToken,
+	console.log("market", [capacity1.toString(), initialPrice1.toString(), buffer1])
+	console.log("booleans", [false, true])
+	console.log("terms", [vesting1, conclusion1])
+	console.log("intervals", [depositInterval1, tuneInterval1]
 	)
 	await execute('BondDepository', { from: localhost, log: true }, 'create',
 		_quoteToken1, // IERC20 _quoteToken,

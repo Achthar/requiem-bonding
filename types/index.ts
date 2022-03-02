@@ -41,6 +41,7 @@ export type { IRequiemWeightedPair } from "./IRequiemWeightedPair";
 export type { IRequiemWeightedPairFactory } from "./IRequiemWeightedPairFactory";
 export type { IRewarder } from "./IRewarder";
 export type { IsREQ } from "./IsREQ";
+export type { IStableLPToken } from "./IStableLPToken";
 export type { IStaking } from "./IStaking";
 export type { IStakingHelper } from "./IStakingHelper";
 export type { ITreasury } from "./ITreasury";
@@ -144,6 +145,7 @@ export { IRequiemWeightedPair__factory } from "./factories/IRequiemWeightedPair_
 export { IRequiemWeightedPairFactory__factory } from "./factories/IRequiemWeightedPairFactory__factory";
 export { IRewarder__factory } from "./factories/IRewarder__factory";
 export { IsREQ__factory } from "./factories/IsREQ__factory";
+export { IStableLPToken__factory } from "./factories/IStableLPToken__factory";
 export { IStaking__factory } from "./factories/IStaking__factory";
 export { IStakingHelper__factory } from "./factories/IStakingHelper__factory";
 export { ITreasury__factory } from "./factories/ITreasury__factory";

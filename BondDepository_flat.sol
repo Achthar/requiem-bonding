@@ -63,7 +63,7 @@ interface ITreasury {
 // File: contracts/interfaces/IStaking.sol
 
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 interface IStaking {
     function stake(
@@ -104,7 +104,7 @@ interface IStaking {
 // File: contracts/interfaces/ERC20/IERC20.sol
 
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 interface IERC20 {
     function decimals() external view returns (uint8);
@@ -132,7 +132,6 @@ pragma solidity >=0.7.5;
 
 
 interface IBondDepository {
-
   // Info about each type of market
   struct Market {
     uint256 capacity; // capacity remaining
@@ -171,7 +170,6 @@ interface IBondDepository {
     bool active;
   }
 
-
   /**
    * @notice deposit market
    * @param _bid uint256
@@ -189,35 +187,52 @@ interface IBondDepository {
     uint256 _maxPrice,
     address _user,
     address _referral
-  ) external returns (
-    uint256 payout_, 
-    uint256 expiry_,
-    uint256 index_
-  );
+  )
+    external
+    returns (
+      uint256 payout_,
+      uint256 expiry_,
+      uint256 index_
+    );
 
-  function create (
+  function create(
     IERC20 _quoteToken, // token used to deposit
     uint256[3] memory _market, // [capacity, initial price]
     bool[2] memory _booleans, // [capacity in quote, fixed term]
     uint256[2] memory _terms, // [vesting, conclusion]
     uint32[2] memory _intervals // [deposit interval, tune interval]
   ) external returns (uint256 id_);
+
   function close(uint256 _id) external;
 
   function isLive(uint256 _bid) external view returns (bool);
+
   function liveMarkets() external view returns (uint256[] memory);
-  function liveMarketsFor(address _quoteToken) external view returns (uint256[] memory);
-  function payoutFor(uint256 _amount, uint256 _bid) external view returns (uint256);
+
+  function liveMarketsFor(address _quoteToken)
+    external
+    view
+    returns (uint256[] memory);
+
+  function payoutFor(uint256 _amount, uint256 _bid)
+    external
+    view
+    returns (uint256);
+
   function marketPrice(uint256 _bid) external view returns (uint256);
+
   function currentDebt(uint256 _bid) external view returns (uint256);
+
   function debtRatio(uint256 _bid) external view returns (uint256);
-  function debtDecay(uint256 _bid) external view returns (uint64);
+
+  function debtDecay(uint256 _bid) external view returns (uint256);
 }
+
 // File: contracts/interfaces/ERC20/IERC20Metadata.sol
 
 
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.12;
 
 
 /**
@@ -249,7 +264,7 @@ interface IERC20Metadata is IERC20 {
 // The `safeTransfer` and `safeTransferFrom` functions assume that `token` is a contract (an account with code), and
 // work differently from the OpenZeppelin version if it is not.
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.12;
 
 
 /**
@@ -700,7 +715,7 @@ abstract contract NoteKeeper is INoteKeeper, FrontEndRewarder {
 // File: contracts/BondDepository.sol
 
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.12;
 
 
 
@@ -745,7 +760,7 @@ contract BondDepository is IBondDepository, NoteKeeper {
         ITreasury _treasury
     ) NoteKeeper(_authority, _req, _greq, _staking, _treasury) {
         // save gas for users by bulk approving stake() transactions
-        _req.approve(address(_staking), 1e45);
+        _req.approve(address(_staking), 1e51);
     }
 
     /* ======== DEPOSIT ======== */
@@ -993,7 +1008,7 @@ contract BondDepository is IBondDepository, NoteKeeper {
          * that will decay over in the length of the program if price remains the same).
          * it is converted into base token terms if passed in in quote token terms.
          *
-         * 1e18 = req decimals (x) + initial price decimals (9)
+         * 1e18 = req decimals (x) + initial price decimals (18)
          */
         uint256 targetDebt = uint256(_booleans[0] ? ((_market[0] * (10**(2 * req.decimals()))) / _market[1]) / 10**decimals : _market[0]);
 
@@ -1043,10 +1058,10 @@ contract BondDepository is IBondDepository, NoteKeeper {
         terms.push(
             Terms({
                 fixedTerm: _booleans[1],
-                controlVariable: uint64(controlVariable),
                 vesting: uint48(_terms[0]),
                 conclusion: uint48(_terms[1]),
-                maxDebt: uint64(maxDebt)
+                controlVariable: controlVariable,
+                maxDebt: maxDebt
             })
         );
 
@@ -1148,12 +1163,12 @@ contract BondDepository is IBondDepository, NoteKeeper {
      * @param _id          ID of market
      * @return             amount of debt to decay
      */
-    function debtDecay(uint256 _id) public view override returns (uint64) {
+    function debtDecay(uint256 _id) public view override returns (uint256) {
         Metadata memory meta = metadata[_id];
 
         uint256 secondsSince = block.timestamp - meta.lastDecay;
 
-        return uint64((markets[_id].totalDebt * secondsSince) / meta.length);
+        return (markets[_id].totalDebt * secondsSince) / meta.length;
     }
 
     /**

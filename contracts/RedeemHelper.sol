@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 import "./libraries/Manageable.sol";
 import "./interfaces/IBond.sol";

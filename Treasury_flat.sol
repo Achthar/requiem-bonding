@@ -115,7 +115,7 @@ interface ITreasury {
 // File: contracts/interfaces/IBondingCalculator.sol
 
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 interface IBondingCalculator {
   function valuation(address pair_, uint256 amount_)
@@ -127,7 +127,7 @@ interface IBondingCalculator {
 // File: contracts/interfaces/IOwnable.sol
 
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 interface IOwnable {
   function owner() external view returns (address);
@@ -139,7 +139,7 @@ interface IOwnable {
 // File: contracts/interfaces/ERC20/IERC20.sol
 
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 interface IERC20 {
     function decimals() external view returns (uint8);
@@ -208,7 +208,7 @@ interface IREQ is IERC20 {
 
 
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.12;
 
 
 /**
@@ -240,7 +240,7 @@ interface IERC20Metadata is IERC20 {
 // The `safeTransfer` and `safeTransferFrom` functions assume that `token` is a contract (an account with code), and
 // work differently from the OpenZeppelin version if it is not.
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.12;
 
 
 /**
@@ -318,7 +318,7 @@ library SafeERC20 {
 // File: contracts/Treasury.sol
 
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.12;
 
 
 

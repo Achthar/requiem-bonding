@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.12;
 
 import "./libraries/types/NoteKeeper.sol";
 
@@ -345,10 +345,10 @@ contract BondDepository is IBondDepository, NoteKeeper {
         terms.push(
             Terms({
                 fixedTerm: _booleans[1],
-                controlVariable: uint64(controlVariable),
                 vesting: uint48(_terms[0]),
                 conclusion: uint48(_terms[1]),
-                maxDebt: uint64(maxDebt)
+                controlVariable: controlVariable,
+                maxDebt: maxDebt
             })
         );
 
@@ -450,12 +450,12 @@ contract BondDepository is IBondDepository, NoteKeeper {
      * @param _id          ID of market
      * @return             amount of debt to decay
      */
-    function debtDecay(uint256 _id) public view override returns (uint64) {
+    function debtDecay(uint256 _id) public view override returns (uint256) {
         Metadata memory meta = metadata[_id];
 
         uint256 secondsSince = block.timestamp - meta.lastDecay;
 
-        return uint64((markets[_id].totalDebt * secondsSince) / meta.length);
+        return (markets[_id].totalDebt * secondsSince) / meta.length;
     }
 
     /**
