@@ -7,7 +7,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { parseUnits } from 'ethers/lib/utils';
 import { BigNumber } from "ethers";
 import { constants } from 'ethers';
-import { Console } from 'console';
+import { Console, time } from 'console';
 // import { deploy, deployedAt } from "./contract";
 
 
@@ -52,7 +52,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		args: [],
 	});
 
-	// await execute('sRequiem', { from: deployer, log: true }, 'setIndex', '50000000000000000000')
+	await execute('sRequiem', { from: deployer, log: true }, 'setIndex', '50000000000000000000')
 
 
 	const gREQ = await deploy('gREQ', {
@@ -65,7 +65,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		],
 	});
 
-	// await execute('gREQ', { from: deployer, log: true }, 'mint', deployer, ONEE18.mul(BigNumber.from(10)))
+	await execute('gREQ', { from: deployer, log: true }, 'mint', deployer, ONEE18.mul(BigNumber.from(10)))
+
 
 	const authority = await deploy('Authority', {
 		contract: 'Authority',
@@ -78,7 +79,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 			deployer // address _vault
 		],
 	});
-
+	const timeStamp = Math.round((new Date()).getTime() / 1000);
 
 	const staking = await deploy('Staking', {
 		contract: 'Staking',
@@ -88,16 +89,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 			REQ.address, //address _REQT,
 			sREQ.address, // address _sREQT,
 			gREQ.address,
-			10000,// uint256 _epochLength,
+			60 * 60 * 24 * 30 * 6,// uint256 _epochLength,
 			1,// uint256 _firstEpochNumber,
-			0, // uint256 _firstEpochBlock
+			timeStamp + 60 * 60 * 24 * 30 * 6, // uint256 _firstEpochBlock
 			authority.address
 		],
 	});
 	console.log("init sreq")
 
-	// await execute('sRequiem', { from: deployer, log: true }, 'initialize', staking.address)
-
+	await execute('sRequiem', { from: deployer, log: true }, 'initialize', staking.address)
 
 	const treasury = await deploy('Treasury', {
 		contract: 'Treasury',
@@ -125,19 +125,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 	console.log('set treasury as minter')
 	await execute('RequiemERC20Token', { from: deployer, log: true }, 'setMinter', treasury.address, ethers.constants.MaxInt256);
-
-	const weightedPair = await ethers.getContractFactory('RequiemWeightedPair');
-	const weightedPairContract = await weightedPair.attach(pairREQT_DAI)
-
-	console.log("approve spending of treasury")
-	// await weightedPairContract.approve(treasury.address, ethers.constants.MaxInt256)
-	// await execute('RequiemWeightedPair', { from: deployer, log: true }, 'approve', treasury.address, ethers.constants.MaxInt256)
-
-	console.log("approve spending of Depository")
-	// await execute('RequiemWeightedPair', { from: deployer, log: true }, 'approve', bondingDepository.address, ethers.constants.MaxInt256)
-	// await weightedPairContract.approve(bondingDepository.address, ethers.constants.MaxInt256)
-	// await execute('RequiemERC20', { from: deployer, log: true }, 'approve', bondingDepository.address, ethers.constants.MaxInt256)
-
+	await execute('RequiemERC20Token', { from: deployer, log: true }, 'mint', treasury.address, ONEE18.mul('1000000'));
 
 	// enum according to the contract
 	enum STATUS {
@@ -227,15 +215,36 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	)
 	await execute('Treasury', { from: deployer, log: true }, 'execute', 7)
 
-	// await execute('RequiemERC20', { from: deployer, log: true }, 'mint(treasury.address, '1000000000000000000000000')
+	const wavaxUsdcLp = '0x1152803C660f86D262f9A235612ddc82f705c0bD'
+	const weightedCalc = '0xf6E44b8210d6d0b07ff90ABD23d40b937079b161'
+	console.log("queueTimelock wavaxLP LP")
+	await execute('Treasury', { from: deployer, log: true }, 'queueTimelock',
+		STATUS.LIQUIDITYTOKEN, // STATUS _managing,
+		wavaxUsdcLp, // address _address,
+		weightedCalc// address _calculator
+	)
+	await execute('Treasury', { from: deployer, log: true }, 'execute', 8)
+
+
+	const stableCalculator = '0x788E4f71c710f3dbe028aA19aD52afc42f24F904'
+	const stableLP = '0x3372DE341A07418765Ae12f77aEe9029EaA4442A'
+	console.log("queueTimelock stable LP")
+	await execute('Treasury', { from: deployer, log: true }, 'queueTimelock',
+		STATUS.LIQUIDITYTOKEN, // STATUS _managing,
+		stableLP, // address _address,
+		stableCalculator// address _calculator
+	)
+	await execute('Treasury', { from: deployer, log: true }, 'execute', 9)
+
+
+	// await execute('RequiemERC20Token', { from: deployer, log: true }, 'mint', treasury.address, '1000000000000000000000')
 	// await daiContract.mint(treasury.address, '1000000000000000000000000')
 	await execute('gREQ', { from: deployer, log: true }, 'mint', treasury.address, ONEE18)
-
-	await execute('Treasury', { from: deployer, log: true }, 'auditReserves')
-
+	await execute('gREQ', { from: deployer, log: true }, 'migrate', staking.address, sREQ.address)
 
 	const bn2 = await ethers.provider.getBlockNumber()
 	console.log("block number", bn2)
+
 
 
 	const capacity = BigNumber.from('500000').mul(ONEE18);
@@ -261,6 +270,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	console.log("MP", mP.toString())
 
 	await execute('BondDepository', { from: deployer, log: true }, 'setRewards', refReward, daoReward);
+	await execute('Treasury', { from: deployer, log: true }, 'auditReserves')
+
 
 	/**
 	 * @notice             creates a new market type
@@ -273,93 +284,61 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	 * @return id_         ID of new bond market
 	 */
 
+	console.log("create req bond")
 	const _quoteToken = pairREQT_DAI
 
+	const _market = ["9000000000000000000000000", "3650000000000000000", "200000"].map(n => BigNumber.from(n))
+
+	const _booleans = [0, 1]
+
+	const _terms = [15552000, timeStamp + 15552000]
+
+	const _intervals = [86400, 86400]
 	await execute('BondDepository', { from: deployer, log: true }, 'create',
 		_quoteToken, // IERC20 _quoteToken,
-		[capacity, initialPrice, buffer],
-		[false, true],
-		[vesting, conclusion],
-		[depositInterval, tuneInterval]
+		_market, // [capacity, initialPrice, buffer],
+		_booleans, // [false, true],
+		_terms, // [vesting, conclusion],
+		_intervals// [depositInterval, tuneInterval]
 	)
 
-	// const mD = await execute('BondDepository', { from: deployer, log: true }, 'metadata', 0)
-	// const dR = await execute('BondDepository', { from: deployer, log: true }, 'debtRatio', 0)
-	// const cD = await execute('BondDepository', { from: deployer, log: true }, 'currentDebt', 0)
-	// const bS = await execute('Treasury', { from: deployer, log: true }, 'baseSupply')
-	// const tD = await execute('Treasury', { from: deployer, log: true }, 'totalDebt')
-	// const tR = await execute('Treasury', { from: deployer, log: true }, 'totalReserves')
-	// const terms = await execute('BondDepository', { from: deployer, log: true }, 'terms', 0)
-	// const cV = await execute('BondDepository', { from: deployer, log: true }, 'currentControlVariable', 0)
-	// const excessRes = await execute('Treasury', { from: deployer, log: true }, 'excessReserves')
-	// const tS = await execute('RequiemERC20', { from: deployer, log: true }, 'totalSupply')
 
-	// console.log("metaData", mD)
-	// console.log("debtRatio", dR.toString())
-	// console.log("currentDebt", cD.toString())
-	// console.log("baseSupply", bS.toString())
-	// console.log("totalDebt", tD.toString())
-	// console.log("totalReserves", tR.toString())
-	// console.log("totalSupply", tS.toString())
-	// console.log("terms", terms)
-	// // console.log("CVariable", terms.controlVariable.toString())
-	// console.log("CVariable Current", cV.toString())
-	// console.log("excess Reserves", excessRes.toString())
+	console.log("create wavax bond")
+	const _quoteToken1 = wavaxUsdcLp // 
 
-	const bp = await execute('BondDepository', { from: deployer, log: true }, 'marketPrice',
-		0
-	)
-	console.log("bond price", bp.toString())
-	// console.log("bond price manual", cV.mul(dR).div(BigNumber.from('1000000000000000000')).toString())
+	const _market1 = ["9000000000000000000000000", "4050000000000000000", "200000"].map(n => BigNumber.from(n))
 
-	const payoutInp = BigNumber.from(ONEE18.mul(BigNumber.from('10')))
+	const _booleans1 = [0, 1]
 
-	/**
-	 * @notice             deposit quote tokens in exchange for a bond from a specified market
-	 * @param _id          the ID of the market
-	 * @param _amount      the amount of quote token to spend
-	 * @param _maxPrice    the maximum price at which to buy
-	 * @param _user        the recipient of the payout
-	 * @param _referral    the front end operator address
-	 * @return payout_     the amount of gREQ due
-	 * @return expiry_     the timestamp at which payout is redeemable
-	 * @return index_      the user index of the Note (used to redeem or query information)
-	 */
-	await execute('BondDepository', { from: deployer, log: true }, 'deposit',
-		0, // uint256 _id,
-		payoutInp, // uint256 _amount,
-		BigNumber.from('9999999999999999999999999999999'), // uint256 _maxPrice,
-		deployer, // address _user,
-		deployer // address _referral
+	const _terms1 = [60 * 60 * 24 * 30 * 6, timeStamp + 60 * 60 * 24 * 30 * 6]
+
+	const _intervals1 = [86400, 86400]
+	await execute('BondDepository', { from: deployer, log: true }, 'create',
+		_quoteToken1, // IERC20 _quoteToken,
+		_market1, // [capacity, initialPrice, buffer],
+		_booleans1, // [false, true],
+		_terms1, // [vesting, conclusion],
+		_intervals1// [depositInterval, tuneInterval]
 	)
 
-	// const mD1 = await execute('BondDepository', { from: deployer, log: true }, 'metadata', 0)
-	// const dR1 = await execute('BondDepository', { from: deployer, log: true }, 'debtRatio', 0)
-	// const cD1 = await execute('BondDepository', { from: deployer, log: true }, 'currentDebt', 0)
-	// const bS1 = await execute('Treasury', { from: deployer, log: true }, 'baseSupply')
-	// const tD1 = await execute('Treasury', { from: deployer, log: true }, 'totalDebt')
-	// const tR1 = await execute('Treasury', { from: deployer, log: true }, 'totalReserves')
-	// const terms1 = await execute('BondDepository', { from: deployer, log: true }, 'terms', 0)
-	// const cV1 = await execute('BondDepository', { from: deployer, log: true }, 'currentControlVariable', 0)
-	// const excessRes1 = await execute('Treasury', { from: deployer, log: true }, 'excessReserves')
-	// const tS1 = await execute('RequiemERC20', { from: deployer, log: true }, 'totalSupply')
 
-	// console.log("metaData", mD1)
-	// console.log("debtRatio", dR1.toString())
-	// console.log("currentDebt", cD1.toString())
-	// console.log("baseSupply", bS1.toString())
-	// console.log("totalDebt", tD1.toString())
-	// console.log("totalReserves", tR1.toString())
-	// console.log("totalSupply", tS1.toString())
-	// console.log("terms", terms1)
-	// console.log("CVariable", terms1.controlVariable.toString())
-	// console.log("CVariable Current", cV1.toString())
-	// console.log("excess Reserves", excessRes1.toString())
+	console.log("create stable LP bond")
+	const _quoteToken2 = wavaxUsdcLp // 
 
+	const _market2 = ["9000000000000000000000000", "4050000000000000000", "200000"].map(n => BigNumber.from(n))
 
-	const bp1 = await execute('BondDepository', { from: deployer, log: true }, 'marketPrice', 0)
-	console.log("bond price", bp1.toString())
-	// console.log("bond price manual", cV1.mul(dR1).div(BigNumber.from('1000000000000000000')).toString())
+	const _booleans2 = [0, 0]
+
+	const _terms2 = [60 * 60 * 24 * 30 * 6, timeStamp + 60 * 60 * 24 * 30 * 6]
+
+	const _intervals2 = [86400, 86400]
+	await execute('BondDepository', { from: deployer, log: true }, 'create',
+		_quoteToken2, // IERC20 _quoteToken,
+		_market2, // [capacity, initialPrice, buffer],
+		_booleans2, // [false, true],
+		_terms2, // [vesting, conclusion],
+		_intervals2// [depositInterval, tuneInterval]
+	)
 
 };
 export default func;
