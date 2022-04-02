@@ -63,7 +63,7 @@ interface ITreasury {
 // File: contracts/interfaces/IStaking.sol
 
 
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 interface IStaking {
     function stake(
@@ -104,7 +104,7 @@ interface IStaking {
 // File: contracts/interfaces/ERC20/IERC20.sol
 
 
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 interface IERC20 {
     function decimals() external view returns (uint8);
@@ -232,7 +232,7 @@ interface IBondDepository {
 
 
 
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.13;
 
 
 /**
@@ -264,7 +264,7 @@ interface IERC20Metadata is IERC20 {
 // The `safeTransfer` and `safeTransferFrom` functions assume that `token` is a contract (an account with code), and
 // work differently from the OpenZeppelin version if it is not.
 
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.13;
 
 
 /**
@@ -715,7 +715,7 @@ abstract contract NoteKeeper is INoteKeeper, FrontEndRewarder {
 // File: contracts/BondDepository.sol
 
 
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.13;
 
 
 

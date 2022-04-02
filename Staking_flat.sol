@@ -86,7 +86,7 @@ abstract contract AccessControlled {
 // File: contracts/interfaces/IDistributor.sol
 
 
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 interface IDistributor {
     function distribute() external;
@@ -116,7 +116,7 @@ interface IDistributor {
 // File: contracts/interfaces/ERC20/IERC20.sol
 
 
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 interface IERC20 {
     function decimals() external view returns (uint8);
@@ -195,7 +195,7 @@ interface IsREQ is IERC20 {
 // The `safeTransfer` and `safeTransferFrom` functions assume that `token` is a contract (an account with code), and
 // work differently from the OpenZeppelin version if it is not.
 
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.13;
 
 
 /**
@@ -273,7 +273,7 @@ library SafeERC20 {
 // File: contracts/Staking.sol
 
 
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.13;
 
 
 

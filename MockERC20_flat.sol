@@ -3,7 +3,7 @@
 
 
 
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.13;
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -27,7 +27,7 @@ abstract contract Context {
 // File: contracts/interfaces/ERC20/IERC20.sol
 
 
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 interface IERC20 {
     function decimals() external view returns (uint8);
@@ -52,7 +52,7 @@ interface IERC20 {
 
 
 
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.13;
 
 
 /**
@@ -80,7 +80,7 @@ interface IERC20Metadata is IERC20 {
 
 
 
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.13;
 
 
 
