@@ -2,9 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./libraries/types/NoteKeeper.sol";
-
 import "./libraries/SafeERC20.sol";
-
 import "./interfaces/ERC20/IERC20Metadata.sol";
 import "./interfaces/IBondDepository.sol";
 

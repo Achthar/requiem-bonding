@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.13;
 
-import "./IRequiemStableSwap.sol";
+import "./ISwap.sol";
 
 interface IStableLPToken {
-  function swap() external view returns (IRequiemStableSwap);
+  function swap() external view returns (ISwap);
 
   function totalSupply() external view returns (uint256);
 }

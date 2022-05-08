@@ -148,7 +148,7 @@ contract Distributor is IDistributor, AccessControlled {
      * @param _bounty uint256
      */
     function setBounty(uint256 _bounty) external override onlyGovernor {
-        require(_bounty <= 2e9, "Too much");
+        require(_bounty <= 2e18, "Too much");
         bounty = _bounty;
     }
 

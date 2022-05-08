@@ -15,7 +15,7 @@ const _abi = [
     name: "swap",
     outputs: [
       {
-        internalType: "contract IRequiemStableSwap",
+        internalType: "contract ISwap",
         name: "",
         type: "address",
       },

@@ -4,15 +4,14 @@ pragma solidity 0.8.13;
 
 import "./interfaces/IBondingCalculator.sol";
 import "./interfaces/ERC20/IERC20.sol";
-import "./interfaces/IRequiemSwap.sol";
+import "./interfaces/ISwap.sol";
 import "./libraries/math/FixedPoint.sol";
 import "./interfaces/IStableLPToken.sol";
-
 
 /**
  * Bonding calculator for stable pool
  */
-contract RequiemStableBondingCalculator is IBondingCalculator {
+contract StableBondingCalculator is IBondingCalculator {
   using FixedPoint for *;
 
   address public immutable QUOTE;
@@ -26,18 +25,19 @@ contract RequiemStableBondingCalculator is IBondingCalculator {
   // uses the 0.01% inputAmount for that calculation
   // note that we never use the actual LP as input as the swap contains the LP address
   // and is also used to extract the balances
-  function getTotalValue(address _lpAddress) public view returns (uint256 _value) {
-    IRequiemStableSwap swap = IStableLPToken(_lpAddress).swap();
+  function getTotalValue(address _lpAddress)
+    public
+    view
+    returns (uint256 _value)
+  {
+    ISwap swap = IStableLPToken(_lpAddress).swap();
+    IERC20[] memory tokens = swap.getPooledTokens();
     uint256[] memory reserves = swap.getTokenBalances();
-    uint8 quoteIndex = swap.getTokenIndex(QUOTE);
     for (uint8 i = 0; i < reserves.length; i++) {
-      if (i != quoteIndex) {
+      address tokenAddr = address(tokens[i]);
+      if (tokenAddr != QUOTE) {
         _value +=
-          swap.calculateSwap(
-            i,
-            quoteIndex,
-            reserves[i] / 10000
-          ) *
+          swap.calculateSwapGivenIn(tokenAddr, QUOTE, reserves[i] / 10000) *
           10000;
       }
     }
